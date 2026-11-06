@@ -454,22 +454,15 @@
         let userPseudo = "";
 
         function getTodayQuestions() {
-            const todayStr = new Date().toISOString().split('T')[0];
-            let questionsPool = [];
-
-            Object.keys(dailyQuestions).forEach(date => {
-                if (date <= todayStr) {
-                    questionsPool = questionsPool.concat(dailyQuestions[date]);
-                }
-            });
-
-            if (questionsPool.length === 0) {
-                Object.keys(dailyQuestions).forEach(date => {
-                    questionsPool = questionsPool.concat(dailyQuestions[date]);
-                });
+            // Utilise la date locale (Europe) pour correspondre aux jours du quiz
+            const now = new Date();
+            const todayStr = now.toLocaleDateString('en-CA'); // format YYYY-MM-DD en local
+            if (dailyQuestions[todayStr]) {
+                return dailyQuestions[todayStr];
             }
-
-            return questionsPool;
+            // Fallback : prend les questions du dernier jour disponible
+            const dates = Object.keys(dailyQuestions).sort();
+            return dailyQuestions[dates[dates.length - 1]] || [];
         }
 
         function startQuiz() {
@@ -530,12 +523,19 @@
                 const res = await fetch(BASE_RAW_URL + filename + "?t=" + Date.now());
                 if (res.ok) {
                     const data = await res.json();
-                    return Array.isArray(data) ? data : [];
+                    const arr = Array.isArray(data) ? data : [];
+                    // Met à jour le backup local avec les données fraîches de GitHub
+                    localStorage.setItem("backup_" + filename, JSON.stringify(arr));
+                    return arr;
                 }
             } catch (e) {}
             // Fallback localStorage si GitHub inaccessible
             const local = localStorage.getItem("backup_" + filename);
-            return local ? JSON.parse(local) : [];
+            try {
+                return local ? JSON.parse(local) : [];
+            } catch (e) {
+                return [];
+            }
         }
 
         async function fetchScores() {
@@ -544,7 +544,7 @@
             tbody.innerHTML = "";
 
             if (!scores || scores.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Aucun score pour l'instant. Soyez le premier !</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Aucun score pour l\'instant. Soyez le premier !</td></tr>';
                 return;
             }
 
@@ -580,9 +580,13 @@
                 const res = await fetch(url, { headers: { 'Authorization': `token ${GITHUB_CONFIG.token}` } });
                 if (res.ok) {
                     const data = await res.json();
-                    const cleanedBase64 = data.content.replace(/[
-\s]/g, '');
-                    let scores = JSON.parse(decodeURIComponent(escape(atob(cleanedBase64))) || "[]");
+                    const cleanedBase64 = data.content.replace(/\s/g, '');
+                    let scores = [];
+                    try {
+                        const decoded = decodeURIComponent(escape(atob(cleanedBase64)));
+                        scores = decoded ? JSON.parse(decoded) : [];
+                        if (!Array.isArray(scores)) scores = [];
+                    } catch (e) { scores = []; }
                     scores.push({ pseudo: pseudo, score: userScore, date: new Date().toISOString() });
                     const updatedContent = btoa(unescape(encodeURIComponent(JSON.stringify(scores, null, 2))));
 
@@ -636,9 +640,13 @@
                 const res = await fetch(url, { headers: { 'Authorization': `token ${GITHUB_CONFIG.token}` } });
                 if (res.ok) {
                     const data = await res.json();
-                    const cleanedBase64 = data.content.replace(/[
-\s]/g, '');
-                    let messages = JSON.parse(decodeURIComponent(escape(atob(cleanedBase64))) || "[]");
+                    const cleanedBase64 = data.content.replace(/\s/g, '');
+                    let messages = [];
+                    try {
+                        const decoded = decodeURIComponent(escape(atob(cleanedBase64)));
+                        messages = decoded ? JSON.parse(decoded) : [];
+                        if (!Array.isArray(messages)) messages = [];
+                    } catch (e) { messages = []; }
                     messages.push({ name: name, text: text, date: new Date().toISOString() });
                     const updatedContent = btoa(unescape(encodeURIComponent(JSON.stringify(messages, null, 2))));
 
@@ -669,7 +677,12 @@
         }
 
         function escapeHtml(unsafe) {
-            return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            return String(unsafe)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
         function toggleTheme() {
