@@ -14,7 +14,6 @@
             --accent-glow: #8b5cf6;
             --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
         }
-
         [data-theme="light"] {
             --bg-color: #f8fafc;
             --card-bg: #ffffff;
@@ -24,272 +23,39 @@
             --accent-glow: #6366f1;
             --accent-gradient: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        body {
-            min-height: 100vh;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem 1rem;
-            position: relative;
-            overflow-x: hidden;
-        }
-
-        canvas#confetti-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
-            z-index: 999;
-        }
-
-        .theme-toggle {
-            position: absolute;
-            top: 1.5rem;
-            right: 1.5rem;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            color: var(--text-primary);
-            padding: 0.6rem 1.2rem;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
-        .container {
-            max-width: 800px;
-            width: 100%;
-            text-align: center;
-            z-index: 1;
-        }
-
-        .header {
-            margin-bottom: 2.5rem;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 0.4rem 1.2rem;
-            background: var(--accent-gradient);
-            color: white;
-            border-radius: 50px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            margin-bottom: 1rem;
-        }
-
-        h1 {
-            font-size: 2.8rem;
-            font-weight: 800;
-            margin-bottom: 0.8rem;
-            line-height: 1.2;
-        }
-
-        p.subtitle {
-            font-size: 1.2rem;
-            color: var(--text-secondary);
-        }
-
-        .countdown-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1.2rem;
-            margin-bottom: 2.5rem;
-        }
-
-        .time-box {
-            background-color: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 20px;
-            padding: 1.8rem 1rem;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-        }
-
-        .time-box::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: var(--accent-gradient);
-        }
-
-        .number {
-            font-size: 3.2rem;
-            font-weight: 800;
-            line-height: 1;
-            margin-bottom: 0.5rem;
-            color: var(--accent-glow);
-        }
-
-        .label {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--text-secondary);
-            font-weight: 600;
-        }
-
-        .section-card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 24px;
-            padding: 2rem;
-            text-align: left;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            margin-bottom: 2rem;
-        }
-
-        .section-card h2 {
-            font-size: 1.4rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .desc {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            margin-bottom: 1rem;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 0.8rem;
-            margin-bottom: 1.5rem;
-        }
-
-        input {
-            flex: 1;
-            padding: 0.9rem 1.2rem;
-            border-radius: 12px;
-            border: 1px solid var(--card-border);
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            font-size: 1rem;
-            outline: none;
-        }
-
-        button.btn {
-            padding: 0.9rem 1.8rem;
-            border-radius: 12px;
-            border: none;
-            background: var(--accent-gradient);
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        button.btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .quiz-options {
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-            margin-top: 1rem;
-        }
-
-        .quiz-option {
-            background-color: var(--bg-color);
-            border: 1px solid var(--card-border);
-            padding: 0.9rem 1.2rem;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-            text-align: left;
-        }
-
-        .quiz-option:hover {
-            border-color: var(--accent-glow);
-        }
-
-        .scoreboard-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-
-        .scoreboard-table th, .scoreboard-table td {
-            padding: 0.8rem 1.2rem;
-            text-align: left;
-            border-bottom: 1px solid var(--card-border);
-        }
-
-        .scoreboard-table th {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            text-transform: uppercase;
-        }
-
-        .messages-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-            max-height: 280px;
-            overflow-y: auto;
-        }
-
-        .msg-item {
-            background-color: var(--bg-color);
-            border: 1px solid var(--card-border);
-            padding: 1rem 1.2rem;
-            border-radius: 10px;
-            font-size: 0.95rem;
-        }
-
-        .msg-header {
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: var(--accent-glow);
-            margin-bottom: 4px;
-        }
-
-        .reward-banner {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: white;
-            padding: 0.8rem;
-            border-radius: 12px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 1rem;
-        }
-
-        .day-indicator {
-            font-size: 0.85rem;
-            color: #a855f7;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-
-        #sync-status {
-            font-size: 0.8rem;
-            margin-bottom: 0.8rem;
-            color: var(--text-secondary);
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; transition: background-color 0.3s, color 0.3s; }
+        body { min-height: 100vh; background-color: var(--bg-color); color: var(--text-primary); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; position: relative; overflow-x: hidden; }
+        canvas#confetti-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 999; }
+        .theme-toggle { position: absolute; top: 1.5rem; right: 1.5rem; background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-primary); padding: 0.6rem 1.2rem; border-radius: 50px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .container { max-width: 800px; width: 100%; text-align: center; z-index: 1; }
+        .header { margin-bottom: 2.5rem; }
+        .badge { display: inline-block; padding: 0.4rem 1.2rem; background: var(--accent-gradient); color: white; border-radius: 50px; font-size: 0.9rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 1rem; }
+        h1 { font-size: 2.8rem; font-weight: 800; margin-bottom: 0.8rem; line-height: 1.2; }
+        p.subtitle { font-size: 1.2rem; color: var(--text-secondary); }
+        .countdown-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem; margin-bottom: 2.5rem; }
+        .time-box { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 1.8rem 1rem; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+        .time-box::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--accent-gradient); }
+        .number { font-size: 3.2rem; font-weight: 800; line-height: 1; margin-bottom: 0.5rem; color: var(--accent-glow); }
+        .label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-secondary); font-weight: 600; }
+        .section-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 2rem; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.15); margin-bottom: 2rem; }
+        .section-card h2 { font-size: 1.4rem; margin-bottom: 0.5rem; }
+        .desc { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem; }
+        .input-group { display: flex; gap: 0.8rem; margin-bottom: 1.5rem; }
+        input { flex: 1; padding: 0.9rem 1.2rem; border-radius: 12px; border: 1px solid var(--card-border); background-color: var(--bg-color); color: var(--text-primary); font-size: 1rem; outline: none; }
+        button.btn { padding: 0.9rem 1.8rem; border-radius: 12px; border: none; background: var(--accent-gradient); color: white; font-weight: 600; cursor: pointer; }
+        button.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .quiz-options { display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem; }
+        .quiz-option { background-color: var(--bg-color); border: 1px solid var(--card-border); padding: 0.9rem 1.2rem; border-radius: 10px; cursor: pointer; font-weight: 600; text-align: left; }
+        .quiz-option:hover { border-color: var(--accent-glow); }
+        .scoreboard-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .scoreboard-table th, .scoreboard-table td { padding: 0.8rem 1.2rem; text-align: left; border-bottom: 1px solid var(--card-border); }
+        .scoreboard-table th { color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; }
+        .messages-list { display: flex; flex-direction: column; gap: 0.8rem; max-height: 280px; overflow-y: auto; }
+        .msg-item { background-color: var(--bg-color); border: 1px solid var(--card-border); padding: 1rem 1.2rem; border-radius: 10px; font-size: 0.95rem; }
+        .msg-header { font-weight: 600; font-size: 0.85rem; color: var(--accent-glow); margin-bottom: 4px; }
+        .reward-banner { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 0.8rem; border-radius: 12px; font-weight: bold; text-align: center; margin-bottom: 1rem; }
+        .day-indicator { font-size: 0.85rem; color: #a855f7; font-weight: bold; margin-bottom: 0.5rem; }
+        #sync-status { font-size: 0.8rem; color: var(--text-secondary); }
         @media (max-width: 650px) {
             .countdown-grid { grid-template-columns: repeat(2, 1fr); }
             h1 { font-size: 2rem; }
@@ -299,12 +65,8 @@
     </style>
 </head>
 <body>
-
     <canvas id="confetti-canvas"></canvas>
-
-    <button class="theme-toggle" onclick="toggleTheme()">
-        <span id="theme-icon">🌙</span> Mode
-    </button>
+    <button class="theme-toggle" onclick="toggleTheme()"><span id="theme-icon">🌙</span> Mode</button>
 
     <div class="container">
         <div class="header">
@@ -314,29 +76,15 @@
         </div>
 
         <div class="countdown-grid">
-            <div class="time-box">
-                <div class="number" id="days">00</div>
-                <div class="label">Jours</div>
-            </div>
-            <div class="time-box">
-                <div class="number" id="hours">00</div>
-                <div class="label">Heures</div>
-            </div>
-            <div class="time-box">
-                <div class="number" id="minutes">00</div>
-                <div class="label">Minutes</div>
-            </div>
-            <div class="time-box">
-                <div class="number" id="seconds">00</div>
-                <div class="label">Secondes</div>
-            </div>
+            <div class="time-box"><div class="number" id="days">00</div><div class="label">Jours</div></div>
+            <div class="time-box"><div class="number" id="hours">00</div><div class="label">Heures</div></div>
+            <div class="time-box"><div class="number" id="minutes">00</div><div class="label">Minutes</div></div>
+            <div class="time-box"><div class="number" id="seconds">00</div><div class="label">Secondes</div></div>
         </div>
 
-        <!-- SECTION QUIZ -->
         <div class="section-card">
             <h2>🏆 Grand Quiz de Départ (3 questions / jour)</h2>
             <div class="reward-banner">🍺 Le gagnant du classement remporte une boisson !</div>
-            
             <div id="quiz-registration">
                 <p class="desc">Entrez votre pseudo pour participer au classement :</p>
                 <div class="input-group">
@@ -344,34 +92,22 @@
                     <button class="btn" onclick="startQuiz()">Lancer le Quiz du jour</button>
                 </div>
             </div>
-
             <div id="quiz-box" style="display: none;">
                 <div class="day-indicator" id="quiz-progress-text">Question 1/3</div>
                 <h3 id="quiz-question-title" style="margin-bottom: 1rem;">Question</h3>
                 <div class="quiz-options" id="quiz-options"></div>
             </div>
-
             <div id="quiz-result" style="display: none; text-align: center;">
                 <h3 id="quiz-final-score"></h3>
                 <p class="desc" style="margin-top: 0.5rem;">Votre score a été mis à jour dans le classement !</p>
             </div>
-
             <h3 style="margin-top: 2rem; font-size: 1.1rem;">🥇 Tableau des Scores</h3>
             <table class="scoreboard-table">
-                <thead>
-                    <tr>
-                        <th>Rang</th>
-                        <th>Pseudo</th>
-                        <th>Score Total</th>
-                    </tr>
-                </thead>
-                <tbody id="scoreboard-body">
-                    <tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">Chargement du classement...</td></tr>
-                </tbody>
+                <thead><tr><th>Rang</th><th>Pseudo</th><th>Score Total</th></tr></thead>
+                <tbody id="scoreboard-body"><tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">Chargement...</td></tr></tbody>
             </table>
         </div>
 
-        <!-- SECTION MUR DE MOTS DOUX -->
         <div class="section-card">
             <h2>💬 Laissez un mot doux à Jimmy</h2>
             <p class="desc">Les messages sont synchronisés entre tous les appareils.</p>
@@ -379,7 +115,6 @@
                 <div id="sync-status">🔄 Synchronisation...</div>
                 <button class="btn" style="padding:0.4rem 0.9rem; font-size:0.8rem;" onclick="forceRefresh()">Rafraîchir</button>
             </div>
-            
             <div class="input-group">
                 <input type="text" id="name-input" placeholder="Votre prénom" style="flex: 0.3;">
                 <input type="text" id="msg-input" placeholder="Votre message..." onkeypress="if(event.key==='Enter') addMessage()">
@@ -392,40 +127,36 @@
     </div>
 
     <script>
-        // ========== CONFIG NPOINT ==========
+        // ========== CONFIG JSTASH (fonctionne vraiment en multi-appareils) ==========
         const STORAGE = {
-            messages: "https://api.npoint.io/1710122eb5865f36163b",
-            scores:   "https://api.npoint.io/b6d0c0cea684fb461a5e"
+            messages: {
+                id: "8THv5PIix2AcjsnIU4sW9A",
+                token: "js_edit_UEueYFl5NCK3BQ7NuGV3KBUkERj9IEkiYritMlu6Dus",
+                readUrl: "https://j.jstash.app/8THv5PIix2AcjsnIU4sW9A"
+            },
+            scores: {
+                id: "mM1Sss1bwo5RGdnhtzYVoQ",
+                token: "js_edit_0KZhbT-RYz_G5HUqteIXD43UDKn7dNgzl2PIuvBMSPc",
+                readUrl: "https://j.jstash.app/mM1Sss1bwo5RGdnhtzYVoQ"
+            }
         };
 
         // ========== COMPTE À REBOURS ==========
         const targetDate = new Date("2026-11-10T16:00:00+01:00").getTime();
-
         function updateCountdown() {
-            const now = new Date().getTime();
-            const difference = targetDate - now;
-
-            if (difference <= 0) {
-                document.getElementById("days").innerText = "00";
-                document.getElementById("hours").innerText = "00";
-                document.getElementById("minutes").innerText = "00";
-                document.getElementById("seconds").innerText = "00";
+            const now = Date.now();
+            const diff = targetDate - now;
+            if (diff <= 0) {
+                ["days","hours","minutes","seconds"].forEach(id => document.getElementById(id).innerText = "00");
                 document.getElementById("title").innerText = "C'est l'heure du départ ! 🥳";
                 startConfetti();
                 return;
             }
-
-            const d = Math.floor(difference / (1000 * 60 * 60 * 24));
-            const h = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const m = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-            const s = Math.floor((difference % (1000 * 60)) / 1000);
-
-            document.getElementById("days").innerText = String(d).padStart(2, '0');
-            document.getElementById("hours").innerText = String(h).padStart(2, '0');
-            document.getElementById("minutes").innerText = String(m).padStart(2, '0');
-            document.getElementById("seconds").innerText = String(s).padStart(2, '0');
+            document.getElementById("days").innerText = String(Math.floor(diff / 86400000)).padStart(2, "0");
+            document.getElementById("hours").innerText = String(Math.floor((diff % 86400000) / 3600000)).padStart(2, "0");
+            document.getElementById("minutes").innerText = String(Math.floor((diff % 3600000) / 60000)).padStart(2, "0");
+            document.getElementById("seconds").innerText = String(Math.floor((diff % 60000) / 1000)).padStart(2, "0");
         }
-
         updateCountdown();
         setInterval(updateCountdown, 1000);
 
@@ -458,29 +189,20 @@
             ]
         };
 
-        let currentActiveQuestions = [];
-        let currentQuestionIdx = 0;
-        let quizScore = 0;
-        let userPseudo = "";
+        let currentActiveQuestions = [], currentQuestionIdx = 0, quizScore = 0, userPseudo = "";
 
         function getTodayQuestions() {
-            const todayStr = new Date().toLocaleDateString('en-CA');
-            if (dailyQuestions[todayStr]) return dailyQuestions[todayStr];
-            const dates = Object.keys(dailyQuestions).sort();
-            return dailyQuestions[dates[dates.length - 1]] || [];
+            const today = new Date().toLocaleDateString("en-CA");
+            return dailyQuestions[today] || dailyQuestions[Object.keys(dailyQuestions).sort().pop()] || [];
         }
 
         function startQuiz() {
-            const pseudoInput = document.getElementById("quiz-pseudo");
-            if (!pseudoInput.value.trim()) {
-                alert("Veuillez entrer un pseudo pour jouer.");
-                return;
-            }
-            userPseudo = pseudoInput.value.trim();
+            const pseudo = document.getElementById("quiz-pseudo").value.trim();
+            if (!pseudo) return alert("Veuillez entrer un pseudo pour jouer.");
+            userPseudo = pseudo;
             currentActiveQuestions = getTodayQuestions();
             currentQuestionIdx = 0;
             quizScore = 0;
-
             document.getElementById("quiz-registration").style.display = "none";
             document.getElementById("quiz-box").style.display = "block";
             document.getElementById("quiz-result").style.display = "none";
@@ -491,28 +213,22 @@
             const q = currentActiveQuestions[currentQuestionIdx];
             document.getElementById("quiz-progress-text").innerText = `Question ${currentQuestionIdx + 1} / ${currentActiveQuestions.length}`;
             document.getElementById("quiz-question-title").innerText = q.question;
-            const optionsContainer = document.getElementById("quiz-options");
-            optionsContainer.innerHTML = "";
-
-            q.options.forEach((opt, index) => {
+            const cont = document.getElementById("quiz-options");
+            cont.innerHTML = "";
+            q.options.forEach((opt, i) => {
                 const btn = document.createElement("div");
                 btn.className = "quiz-option";
                 btn.innerText = opt;
-                btn.onclick = () => selectAnswer(index);
-                optionsContainer.appendChild(btn);
+                btn.onclick = () => selectAnswer(i);
+                cont.appendChild(btn);
             });
         }
 
         function selectAnswer(index) {
-            if (index === currentActiveQuestions[currentQuestionIdx].answer) {
-                quizScore += 10;
-            }
+            if (index === currentActiveQuestions[currentQuestionIdx].answer) quizScore += 10;
             currentQuestionIdx++;
-            if (currentQuestionIdx < currentActiveQuestions.length) {
-                showQuestion();
-            } else {
-                finishQuiz();
-            }
+            if (currentQuestionIdx < currentActiveQuestions.length) showQuestion();
+            else finishQuiz();
         }
 
         async function finishQuiz() {
@@ -522,7 +238,7 @@
             saveScore(userPseudo, quizScore);
         }
 
-        // ========== STOCKAGE NPOINT (multi-appareils) ==========
+        // ========== STOCKAGE ==========
         function setSyncStatus(text, isError = false) {
             const el = document.getElementById("sync-status");
             if (el) {
@@ -531,55 +247,45 @@
             }
         }
 
-        async function loadData(url) {
+        async function loadData(cfg) {
             try {
-                const res = await fetch(url + "?t=" + Date.now(), { cache: "no-store" });
+                const res = await fetch(cfg.readUrl + "?t=" + Date.now(), { cache: "no-store" });
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 const data = await res.json();
-                return Array.isArray(data) ? data : [];
+                // jstash returns { content: [...] }
+                const arr = Array.isArray(data) ? data : (data.content || []);
+                return Array.isArray(arr) ? arr : [];
             } catch (e) {
-                console.warn("Erreur chargement:", e);
-                // Fallback localStorage
-                const key = "backup_" + url.split("/").pop();
-                try {
-                    const local = localStorage.getItem(key);
-                    return local ? JSON.parse(local) : [];
-                } catch (err) {
-                    return [];
-                }
+                console.warn(e);
+                const key = "backup_" + cfg.id;
+                try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; }
             }
         }
 
-        async function saveData(url, data) {
-            const res = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
+        async function saveData(cfg, arr) {
+            const res = await fetch(`https://api.jstash.app/v1/bins/${cfg.id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + cfg.token
+                },
+                body: JSON.stringify({ content: arr })
             });
-            if (!res.ok) throw new Error("Écriture échouée HTTP " + res.status);
-            // Backup local
-            const key = "backup_" + url.split("/").pop();
-            localStorage.setItem(key, JSON.stringify(data));
-            return true;
+            if (!res.ok) throw new Error("Écriture échouée " + res.status);
+            localStorage.setItem("backup_" + cfg.id, JSON.stringify(arr));
         }
 
         async function fetchMessages() {
             const list = document.getElementById("messages-list");
             const messages = await loadData(STORAGE.messages);
-
             list.innerHTML = "";
-
-            if (!messages || messages.length === 0) {
-                list.innerHTML = '<div class="msg-item" style="text-align: center; color: var(--text-secondary);">Soyez le premier à laisser un message !</div>';
-                setSyncStatus("✅ Connecté");
-                return;
+            if (!messages.length) {
+                list.innerHTML = '<div class="msg-item" style="text-align:center;color:var(--text-secondary);">Soyez le premier à laisser un message !</div>';
+            } else {
+                messages.slice().reverse().forEach(m => {
+                    if (m && m.name && m.text) appendMessageToDOM(m.name, m.text);
+                });
             }
-
-            messages.slice().reverse().forEach(msg => {
-                if (msg && msg.name && msg.text) {
-                    appendMessageToDOM(msg.name, msg.text);
-                }
-            });
             setSyncStatus("✅ Synchronisé");
         }
 
@@ -587,87 +293,66 @@
             const tbody = document.getElementById("scoreboard-body");
             const scores = await loadData(STORAGE.scores);
             tbody.innerHTML = "";
-
-            if (!scores || scores.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Aucun score pour l\'instant. Soyez le premier !</td></tr>';
+            if (!scores.length) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Aucun score pour l\'instant.</td></tr>';
                 return;
             }
-
-            const aggregated = {};
+            const agg = {};
             scores.forEach(s => {
                 if (s && s.pseudo && typeof s.score === "number") {
-                    if (!aggregated[s.pseudo] || aggregated[s.pseudo] < s.score) {
-                        aggregated[s.pseudo] = s.score;
-                    }
+                    if (!agg[s.pseudo] || agg[s.pseudo] < s.score) agg[s.pseudo] = s.score;
                 }
             });
-
-            const sorted = Object.keys(aggregated).map(k => ({ pseudo: k, score: aggregated[k] }));
-            sorted.sort((a, b) => b.score - a.score);
-
+            const sorted = Object.entries(agg).map(([pseudo, score]) => ({ pseudo, score })).sort((a, b) => b.score - a.score);
             sorted.forEach((s, i) => {
-                const tr = document.createElement("tr");
                 const badge = i === 0 ? "🥇 " : i === 1 ? "🥈 " : i === 2 ? "🥉 " : "";
-                tr.innerHTML = `<td>${badge}#${i + 1}</td><td>${escapeHtml(s.pseudo)}</td><td><strong>${s.score} pts</strong></td>`;
+                const tr = document.createElement("tr");
+                tr.innerHTML = `<td>${badge}#${i+1}</td><td>${escapeHtml(s.pseudo)}</td><td><strong>${s.score} pts</strong></td>`;
                 tbody.appendChild(tr);
             });
         }
 
         async function addMessage() {
-            const nameInput = document.getElementById("name-input");
-            const msgInput = document.getElementById("msg-input");
-            const btnSend = document.getElementById("btn-send");
-
-            const name = nameInput.value.trim() || "Anonyme";
-            const text = msgInput.value.trim();
+            const name = (document.getElementById("name-input").value.trim() || "Anonyme");
+            const text = document.getElementById("msg-input").value.trim();
             if (!text) return;
 
-            btnSend.disabled = true;
-            btnSend.innerText = "Envoi...";
+            const btn = document.getElementById("btn-send");
+            btn.disabled = true;
+            btn.innerText = "Envoi...";
 
             // Affichage immédiat
-            const loadingMsg = document.getElementById("loading-msg");
-            if (loadingMsg) loadingMsg.remove();
+            const loading = document.getElementById("loading-msg");
+            if (loading) loading.remove();
             appendMessageToDOM(name, text);
-            msgInput.value = "";
+            document.getElementById("msg-input").value = "";
 
             try {
                 const messages = await loadData(STORAGE.messages);
-                messages.push({
-                    name: name,
-                    text: text,
-                    date: new Date().toISOString()
-                });
+                messages.push({ name, text, date: new Date().toISOString() });
                 await saveData(STORAGE.messages, messages);
                 setSyncStatus("✅ Message synchronisé sur tous les appareils");
-            } catch (err) {
-                console.error(err);
-                setSyncStatus("⚠️ Erreur d'envoi, message visible ici seulement", true);
+            } catch (e) {
+                console.error(e);
+                setSyncStatus("⚠️ Erreur d'envoi", true);
             } finally {
-                btnSend.disabled = false;
-                btnSend.innerText = "Envoyer";
+                btn.disabled = false;
+                btn.innerText = "Envoyer";
             }
         }
 
-        async function saveScore(pseudo, userScore) {
+        async function saveScore(pseudo, score) {
             try {
                 const scores = await loadData(STORAGE.scores);
-                scores.push({
-                    pseudo: pseudo,
-                    score: userScore,
-                    date: new Date().toISOString()
-                });
+                scores.push({ pseudo, score, date: new Date().toISOString() });
                 await saveData(STORAGE.scores, scores);
-                setTimeout(fetchScores, 600);
-            } catch (err) {
-                console.error("Erreur score:", err);
-            }
+                setTimeout(fetchScores, 500);
+            } catch (e) { console.error(e); }
         }
 
         function appendMessageToDOM(name, text) {
             const list = document.getElementById("messages-list");
-            const items = list.querySelectorAll(".msg-item");
-            for (const el of items) {
+            for (const el of list.querySelectorAll(".msg-item")) {
                 if (el.innerText.includes(name) && el.innerText.includes(text)) return;
             }
             const item = document.createElement("div");
@@ -676,13 +361,8 @@
             list.insertBefore(item, list.firstChild);
         }
 
-        function escapeHtml(unsafe) {
-            return String(unsafe)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
+        function escapeHtml(s) {
+            return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
         }
 
         function toggleTheme() {
@@ -702,8 +382,7 @@
             const ctx = canvas.getContext("2d");
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            const particles = [];
-            const colors = ["#6366f1", "#a855f7", "#ec4899", "#3b82f6", "#10b981", "#f59e0b"];
+            const particles = [], colors = ["#6366f1","#a855f7","#ec4899","#3b82f6","#10b981","#f59e0b"];
             for (let i = 0; i < 150; i++) {
                 particles.push({
                     x: Math.random() * canvas.width,
@@ -717,8 +396,7 @@
             function render() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 particles.forEach(p => {
-                    p.y += p.vy;
-                    p.x += p.vx;
+                    p.y += p.vy; p.x += p.vx;
                     if (p.y > canvas.height) p.y = -10;
                     ctx.fillStyle = p.color;
                     ctx.fillRect(p.x, p.y, p.size, p.size);
@@ -734,16 +412,10 @@
             fetchScores();
         }
 
-        // ========== INIT ==========
         document.addEventListener("DOMContentLoaded", () => {
             fetchMessages();
             fetchScores();
-
-            // Rafraîchissement automatique toutes les 12 secondes
-            setInterval(() => {
-                fetchMessages();
-                fetchScores();
-            }, 12000);
+            setInterval(() => { fetchMessages(); fetchScores(); }, 12000);
         });
     </script>
 </body>
