@@ -200,6 +200,11 @@
             cursor: pointer;
         }
 
+        button.btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .quiz-options {
             display: flex;
             flex-direction: column;
@@ -243,7 +248,7 @@
             display: flex;
             flex-direction: column;
             gap: 0.8rem;
-            max-height: 250px;
+            max-height: 280px;
             overflow-y: auto;
         }
 
@@ -277,6 +282,11 @@
             color: #a855f7;
             font-weight: bold;
             margin-bottom: 0.5rem;
+        }
+
+        #sync-status {
+            font-size: 0.8rem;
+            margin-bottom: 0.8rem;
         }
 
         @media (max-width: 650px) {
@@ -363,12 +373,8 @@
         <!-- SECTION MUR DE MOTS DOUX -->
         <div class="section-card">
             <h2>💬 Laissez un mot doux à Jimmy</h2>
-<<<<<<< HEAD
             <p class="desc">Les messages sont synchronisés entre tous les appareils via GitHub.</p>
-            <div id="sync-status" style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.8rem;">🔄 Synchronisation...</div>
-=======
-            <p class="desc">Enregistré directement sur le dépôt GitHub.</p>
->>>>>>> e9b1df455171132b78c2beae2a9e4d885c274c0e
+            <div id="sync-status">🔄 Synchronisation...</div>
             
             <div class="input-group">
                 <input type="text" id="name-input" placeholder="Votre prénom" style="flex: 0.3;">
@@ -382,6 +388,7 @@
     </div>
 
     <script>
+        // ========== CONFIG ==========
         const GITHUB_CONFIG = {
             owner: "jimmyruti",
             repo: "depart-jimmy",
@@ -390,13 +397,7 @@
             scoresFile: "scores.json"
         };
 
-<<<<<<< HEAD
-=======
-        // URL directes via RAW / GitHub Pages avec fallback localStorage
-        const BASE_RAW_URL = `https://raw.githubusercontent.com/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/main/`;
-
->>>>>>> e9b1df455171132b78c2beae2a9e4d885c274c0e
-        // COMPTE À REBOURS
+        // ========== COMPTE À REBOURS ==========
         const targetDate = new Date("2026-11-10T16:00:00+01:00").getTime();
 
         function updateCountdown() {
@@ -427,7 +428,7 @@
         updateCountdown();
         setInterval(updateCountdown, 1000);
 
-        // QUESTIONS
+        // ========== QUIZ ==========
         const dailyQuestions = {
             "2026-11-06": [
                 { question: "Quel est l'élément chimique représenté par le symbole 'O' ?", options: ["Or", "Oxygène", "Osmium", "Ozone"], answer: 1 },
@@ -462,13 +463,12 @@
         let userPseudo = "";
 
         function getTodayQuestions() {
-            // Utilise la date locale (Europe) pour correspondre aux jours du quiz
             const now = new Date();
-            const todayStr = now.toLocaleDateString('en-CA'); // format YYYY-MM-DD en local
+            const todayStr = now.toLocaleDateString('en-CA'); // YYYY-MM-DD en local
             if (dailyQuestions[todayStr]) {
                 return dailyQuestions[todayStr];
             }
-            // Fallback : prend les questions du dernier jour disponible
+            // Fallback : dernier jour disponible
             const dates = Object.keys(dailyQuestions).sort();
             return dailyQuestions[dates[dates.length - 1]] || [];
         }
@@ -486,6 +486,7 @@
 
             document.getElementById("quiz-registration").style.display = "none";
             document.getElementById("quiz-box").style.display = "block";
+            document.getElementById("quiz-result").style.display = "none";
             showQuestion();
         }
 
@@ -525,11 +526,7 @@
             saveScoreToGitHub(userPseudo, quizScore);
         }
 
-<<<<<<< HEAD
-        // ========== PERSISTENCE GITHUB (multi-appareils) ==========
-        // Utilise l'API Contents de GitHub (moins de cache que raw) + localStorage en secours
-        // + polling pour que les messages apparaissent sur tous les appareils
-
+        // ========== PERSISTENCE GITHUB ==========
         function setSyncStatus(text, isError = false) {
             const el = document.getElementById("sync-status");
             if (el) {
@@ -548,7 +545,8 @@
                 cache: 'no-store'
             });
             if (!res.ok) {
-                if (res.status === 404) throw new Error("Fichier ou dépôt introuvable (404). Créez le dépôt GitHub.");
+                if (res.status === 401) throw new Error("Token invalide ou expiré (401). Génère un nouveau token.");
+                if (res.status === 404) throw new Error("Dépôt ou fichier introuvable (404). Crée le dépôt + messages.json et scores.json.");
                 throw new Error(`GitHub HTTP ${res.status}`);
             }
             const data = await res.json();
@@ -558,7 +556,9 @@
                 const decoded = decodeURIComponent(escape(atob(cleaned)));
                 arr = decoded ? JSON.parse(decoded) : [];
                 if (!Array.isArray(arr)) arr = [];
-            } catch (e) { arr = []; }
+            } catch (e) {
+                arr = [];
+            }
             return { arr, sha: data.sha };
         }
 
@@ -579,13 +579,13 @@
                 body: JSON.stringify(body)
             });
             if (res.status === 409) {
-                // Conflit de SHA → on réessaie une fois avec le nouveau SHA
+                // Conflit → on récupère le nouveau SHA et on réessaie une fois
                 const fresh = await githubGetFile(filename);
                 return githubPutFile(filename, arr, fresh.sha, message);
             }
             if (!res.ok) {
                 const errText = await res.text();
-                throw new Error(`Écriture GitHub échouée (${res.status}): ${errText.slice(0, 120)}`);
+                throw new Error(`Écriture échouée (${res.status})`);
             }
             return true;
         }
@@ -597,34 +597,14 @@
                 setSyncStatus("✅ Synchronisé avec GitHub");
                 return arr;
             } catch (e) {
-                console.warn("GitHub inaccessible, fallback localStorage:", e.message);
-                setSyncStatus("⚠️ Mode local (GitHub inaccessible) — " + e.message, true);
+                console.warn("GitHub inaccessible:", e.message);
+                setSyncStatus("⚠️ " + e.message, true);
                 const local = localStorage.getItem("backup_" + filename);
                 try {
                     return local ? JSON.parse(local) : [];
                 } catch (err) {
                     return [];
                 }
-=======
-        // CHARGEMENT ROBUSTE (RAW + LocalStorage)
-        async function fetchFileContent(filename) {
-            try {
-                const res = await fetch(BASE_RAW_URL + filename + "?t=" + Date.now());
-                if (res.ok) {
-                    const data = await res.json();
-                    const arr = Array.isArray(data) ? data : [];
-                    // Met à jour le backup local avec les données fraîches de GitHub
-                    localStorage.setItem("backup_" + filename, JSON.stringify(arr));
-                    return arr;
-                }
-            } catch (e) {}
-            // Fallback localStorage si GitHub inaccessible
-            const local = localStorage.getItem("backup_" + filename);
-            try {
-                return local ? JSON.parse(local) : [];
-            } catch (e) {
-                return [];
->>>>>>> e9b1df455171132b78c2beae2a9e4d885c274c0e
             }
         }
 
@@ -640,7 +620,7 @@
 
             const aggregated = {};
             scores.forEach(s => {
-                if (s && s.pseudo && s.score !== undefined) {
+                if (s && s.pseudo && typeof s.score === 'number') {
                     if (!aggregated[s.pseudo] || aggregated[s.pseudo] < s.score) {
                         aggregated[s.pseudo] = s.score;
                     }
@@ -653,26 +633,24 @@
             sorted.forEach((s, i) => {
                 const tr = document.createElement("tr");
                 const badge = i === 0 ? "🥇 " : i === 1 ? "🥈 " : i === 2 ? "🥉 " : "";
-                tr.innerHTML = `<td>${badge}#${i+1}</td><td>${escapeHtml(s.pseudo)}</td><td><strong>${s.score} pts</strong></td>`;
+                tr.innerHTML = `<td>${badge}#${i + 1}</td><td>${escapeHtml(s.pseudo)}</td><td><strong>${s.score} pts</strong></td>`;
                 tbody.appendChild(tr);
             });
         }
 
         async function saveScoreToGitHub(pseudo, userScore) {
             try {
-<<<<<<< HEAD
                 // Optimistic local
                 let existing = [];
                 try {
                     const local = localStorage.getItem("backup_" + GITHUB_CONFIG.scoresFile);
                     existing = local ? JSON.parse(local) : [];
                 } catch (e) {}
-                existing.push({ pseudo: pseudo, score: userScore, date: new Date().toISOString() });
+                existing.push({ pseudo, score: userScore, date: new Date().toISOString() });
                 localStorage.setItem("backup_" + GITHUB_CONFIG.scoresFile, JSON.stringify(existing));
 
-                // GitHub
                 const { arr, sha } = await githubGetFile(GITHUB_CONFIG.scoresFile);
-                arr.push({ pseudo: pseudo, score: userScore, date: new Date().toISOString() });
+                arr.push({ pseudo, score: userScore, date: new Date().toISOString() });
                 await githubPutFile(GITHUB_CONFIG.scoresFile, arr, sha, `Score de ${pseudo}`);
                 localStorage.setItem("backup_" + GITHUB_CONFIG.scoresFile, JSON.stringify(arr));
                 setTimeout(fetchScores, 800);
@@ -680,46 +658,12 @@
                 console.error("Sauvegarde score:", err);
                 setSyncStatus("⚠️ Score sauvegardé localement uniquement", true);
             }
-=======
-                // Sauvegarde locale immédiate
-                const existing = await fetchFileContent(GITHUB_CONFIG.scoresFile);
-                existing.push({ pseudo: pseudo, score: userScore, date: new Date().toISOString() });
-                localStorage.setItem("backup_" + GITHUB_CONFIG.scoresFile, JSON.stringify(existing));
-
-                // Tentative GitHub API
-                const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.scoresFile}`;
-                const res = await fetch(url, { headers: { 'Authorization': `token ${GITHUB_CONFIG.token}` } });
-                if (res.ok) {
-                    const data = await res.json();
-                    const cleanedBase64 = data.content.replace(/\s/g, '');
-                    let scores = [];
-                    try {
-                        const decoded = decodeURIComponent(escape(atob(cleanedBase64)));
-                        scores = decoded ? JSON.parse(decoded) : [];
-                        if (!Array.isArray(scores)) scores = [];
-                    } catch (e) { scores = []; }
-                    scores.push({ pseudo: pseudo, score: userScore, date: new Date().toISOString() });
-                    const updatedContent = btoa(unescape(encodeURIComponent(JSON.stringify(scores, null, 2))));
-
-                    await fetch(url, {
-                        method: 'PUT',
-                        headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: `Score de ${pseudo}`, content: updatedContent, sha: data.sha })
-                    });
-                }
-                setTimeout(fetchScores, 1500);
-            } catch (err) { console.error("Sauvegarde score:", err); }
->>>>>>> e9b1df455171132b78c2beae2a9e4d885c274c0e
         }
 
         async function fetchMessagesFromGitHub() {
             const list = document.getElementById("messages-list");
             const messages = await fetchFileContent(GITHUB_CONFIG.messagesFile);
-<<<<<<< HEAD
 
-            // On ne vide pas complètement si on a déjà des messages optimistes récents
-=======
->>>>>>> e9b1df455171132b78c2beae2a9e4d885c274c0e
             list.innerHTML = "";
 
             if (!messages || messages.length === 0) {
@@ -727,6 +671,7 @@
                 return;
             }
 
+            // Plus récents en haut
             messages.slice().reverse().forEach(msg => {
                 if (msg && msg.name && msg.text) {
                     appendMessageToDOM(msg.name, msg.text);
@@ -745,69 +690,32 @@
 
             btnSend.disabled = true;
             btnSend.innerText = "Envoi...";
-<<<<<<< HEAD
 
-            // 1. Affichage immédiat (optimistic UI) — visible tout de suite sur cet appareil
+            // Affichage immédiat
             const loadingMsg = document.getElementById("loading-msg");
             if (loadingMsg) loadingMsg.remove();
             appendMessageToDOM(name, text);
             msgInput.value = "";
 
             try {
-                // 2. Sauvegarde locale
+                // Local
                 let existing = [];
                 try {
                     const local = localStorage.getItem("backup_" + GITHUB_CONFIG.messagesFile);
                     existing = local ? JSON.parse(local) : [];
                 } catch (e) {}
-                existing.push({ name: name, text: text, date: new Date().toISOString() });
+                existing.push({ name, text, date: new Date().toISOString() });
                 localStorage.setItem("backup_" + GITHUB_CONFIG.messagesFile, JSON.stringify(existing));
 
-                // 3. Écriture GitHub (partagée entre tous les appareils)
+                // GitHub
                 const { arr, sha } = await githubGetFile(GITHUB_CONFIG.messagesFile);
-                arr.push({ name: name, text: text, date: new Date().toISOString() });
+                arr.push({ name, text, date: new Date().toISOString() });
                 await githubPutFile(GITHUB_CONFIG.messagesFile, arr, sha, `Message de ${name}`);
                 localStorage.setItem("backup_" + GITHUB_CONFIG.messagesFile, JSON.stringify(arr));
                 setSyncStatus("✅ Message synchronisé sur tous les appareils");
             } catch (err) {
                 console.error("Ajout message:", err);
-                setSyncStatus("⚠️ Message visible ici seulement (GitHub inaccessible) — " + err.message, true);
-=======
-
-            try {
-                // Sauvegarde locale immédiate
-                const existing = await fetchFileContent(GITHUB_CONFIG.messagesFile);
-                existing.push({ name: name, text: text, date: new Date().toISOString() });
-                localStorage.setItem("backup_" + GITHUB_CONFIG.messagesFile, JSON.stringify(existing));
-
-                // Tentative GitHub API
-                const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.messagesFile}`;
-                const res = await fetch(url, { headers: { 'Authorization': `token ${GITHUB_CONFIG.token}` } });
-                if (res.ok) {
-                    const data = await res.json();
-                    const cleanedBase64 = data.content.replace(/\s/g, '');
-                    let messages = [];
-                    try {
-                        const decoded = decodeURIComponent(escape(atob(cleanedBase64)));
-                        messages = decoded ? JSON.parse(decoded) : [];
-                        if (!Array.isArray(messages)) messages = [];
-                    } catch (e) { messages = []; }
-                    messages.push({ name: name, text: text, date: new Date().toISOString() });
-                    const updatedContent = btoa(unescape(encodeURIComponent(JSON.stringify(messages, null, 2))));
-
-                    await fetch(url, {
-                        method: 'PUT',
-                        headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: `Message de ${name}`, content: updatedContent, sha: data.sha })
-                    });
-                }
-
-                msgInput.value = "";
-                setTimeout(fetchMessagesFromGitHub, 1500);
-            } catch (err) {
-                console.error("Ajout message:", err);
-                alert("Erreur lors de l'envoi.");
->>>>>>> e9b1df455171132b78c2beae2a9e4d885c274c0e
+                setSyncStatus("⚠️ " + err.message, true);
             } finally {
                 btnSend.disabled = false;
                 btnSend.innerText = "Envoyer";
@@ -816,28 +724,15 @@
 
         function appendMessageToDOM(name, text) {
             const list = document.getElementById("messages-list");
-            // Évite les doublons visuels si on poll juste après un envoi
-            const existing = list.querySelectorAll(".msg-item");
-            for (const el of existing) {
+            // Évite les doublons
+            const items = list.querySelectorAll(".msg-item");
+            for (const el of items) {
                 if (el.innerText.includes(name) && el.innerText.includes(text)) return;
             }
             const item = document.createElement("div");
             item.className = "msg-item";
             item.innerHTML = `<div class="msg-header">${escapeHtml(name)}</div><div>💬 ${escapeHtml(text)}</div>`;
-<<<<<<< HEAD
-            list.insertBefore(item, list.firstChild); // plus récents en haut
-        }
-
-        function escapeHtml(unsafe) {
-            return String(unsafe)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-=======
-            list.appendChild(item);
->>>>>>> e9b1df455171132b78c2beae2a9e4d885c274c0e
+            list.insertBefore(item, list.firstChild);
         }
 
         function escapeHtml(unsafe) {
@@ -892,19 +787,16 @@
             render();
         }
 
+        // ========== INIT ==========
         document.addEventListener("DOMContentLoaded", () => {
             fetchMessagesFromGitHub();
             fetchScores();
-<<<<<<< HEAD
 
-            // Rafraîchissement automatique toutes les 20 secondes
-            // → les messages postés sur un autre appareil apparaissent ici
+            // Rafraîchissement auto toutes les 20 secondes
             setInterval(() => {
                 fetchMessagesFromGitHub();
                 fetchScores();
             }, 20000);
-=======
->>>>>>> e9b1df455171132b78c2beae2a9e4d885c274c0e
         });
     </script>
 </body>
