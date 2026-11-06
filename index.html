@@ -375,7 +375,10 @@
         <div class="section-card">
             <h2>💬 Laissez un mot doux à Jimmy</h2>
             <p class="desc">Les messages sont synchronisés entre tous les appareils.</p>
-            <div id="sync-status">🔄 Synchronisation...</div>
+            <div style="display:flex; align-items:center; gap:1rem; margin-bottom:0.8rem;">
+                <div id="sync-status">🔄 Synchronisation...</div>
+                <button class="btn" style="padding:0.4rem 0.9rem; font-size:0.8rem;" onclick="forceRefresh()">Rafraîchir</button>
+            </div>
             
             <div class="input-group">
                 <input type="text" id="name-input" placeholder="Votre prénom" style="flex: 0.3;">
@@ -725,16 +728,22 @@
             render();
         }
 
+        function forceRefresh() {
+            setSyncStatus("🔄 Actualisation...");
+            fetchMessages();
+            fetchScores();
+        }
+
         // ========== INIT ==========
         document.addEventListener("DOMContentLoaded", () => {
             fetchMessages();
             fetchScores();
 
-            // Rafraîchissement automatique toutes les 15 secondes
+            // Rafraîchissement automatique toutes les 12 secondes
             setInterval(() => {
                 fetchMessages();
                 fetchScores();
-            }, 15000);
+            }, 12000);
         });
     </script>
 </body>
