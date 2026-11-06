@@ -363,8 +363,12 @@
         <!-- SECTION MUR DE MOTS DOUX -->
         <div class="section-card">
             <h2>💬 Laissez un mot doux à Jimmy</h2>
+<<<<<<< HEAD
             <p class="desc">Les messages sont synchronisés entre tous les appareils via GitHub.</p>
             <div id="sync-status" style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.8rem;">🔄 Synchronisation...</div>
+=======
+            <p class="desc">Enregistré directement sur le dépôt GitHub.</p>
+>>>>>>> e9b1df455171132b78c2beae2a9e4d885c274c0e
             
             <div class="input-group">
                 <input type="text" id="name-input" placeholder="Votre prénom" style="flex: 0.3;">
@@ -381,11 +385,17 @@
         const GITHUB_CONFIG = {
             owner: "jimmyruti",
             repo: "depart-jimmy",
-            token: "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",
+            token: "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",
             messagesFile: "messages.json",
             scoresFile: "scores.json"
         };
 
+<<<<<<< HEAD
+=======
+        // URL directes via RAW / GitHub Pages avec fallback localStorage
+        const BASE_RAW_URL = `https://raw.githubusercontent.com/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/main/`;
+
+>>>>>>> e9b1df455171132b78c2beae2a9e4d885c274c0e
         // COMPTE À REBOURS
         const targetDate = new Date("2026-11-10T16:00:00+01:00").getTime();
 
@@ -515,6 +525,7 @@
             saveScoreToGitHub(userPseudo, quizScore);
         }
 
+<<<<<<< HEAD
         // ========== PERSISTENCE GITHUB (multi-appareils) ==========
         // Utilise l'API Contents de GitHub (moins de cache que raw) + localStorage en secours
         // + polling pour que les messages apparaissent sur tous les appareils
@@ -594,6 +605,26 @@
                 } catch (err) {
                     return [];
                 }
+=======
+        // CHARGEMENT ROBUSTE (RAW + LocalStorage)
+        async function fetchFileContent(filename) {
+            try {
+                const res = await fetch(BASE_RAW_URL + filename + "?t=" + Date.now());
+                if (res.ok) {
+                    const data = await res.json();
+                    const arr = Array.isArray(data) ? data : [];
+                    // Met à jour le backup local avec les données fraîches de GitHub
+                    localStorage.setItem("backup_" + filename, JSON.stringify(arr));
+                    return arr;
+                }
+            } catch (e) {}
+            // Fallback localStorage si GitHub inaccessible
+            const local = localStorage.getItem("backup_" + filename);
+            try {
+                return local ? JSON.parse(local) : [];
+            } catch (e) {
+                return [];
+>>>>>>> e9b1df455171132b78c2beae2a9e4d885c274c0e
             }
         }
 
@@ -629,6 +660,7 @@
 
         async function saveScoreToGitHub(pseudo, userScore) {
             try {
+<<<<<<< HEAD
                 // Optimistic local
                 let existing = [];
                 try {
@@ -648,13 +680,46 @@
                 console.error("Sauvegarde score:", err);
                 setSyncStatus("⚠️ Score sauvegardé localement uniquement", true);
             }
+=======
+                // Sauvegarde locale immédiate
+                const existing = await fetchFileContent(GITHUB_CONFIG.scoresFile);
+                existing.push({ pseudo: pseudo, score: userScore, date: new Date().toISOString() });
+                localStorage.setItem("backup_" + GITHUB_CONFIG.scoresFile, JSON.stringify(existing));
+
+                // Tentative GitHub API
+                const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.scoresFile}`;
+                const res = await fetch(url, { headers: { 'Authorization': `token ${GITHUB_CONFIG.token}` } });
+                if (res.ok) {
+                    const data = await res.json();
+                    const cleanedBase64 = data.content.replace(/\s/g, '');
+                    let scores = [];
+                    try {
+                        const decoded = decodeURIComponent(escape(atob(cleanedBase64)));
+                        scores = decoded ? JSON.parse(decoded) : [];
+                        if (!Array.isArray(scores)) scores = [];
+                    } catch (e) { scores = []; }
+                    scores.push({ pseudo: pseudo, score: userScore, date: new Date().toISOString() });
+                    const updatedContent = btoa(unescape(encodeURIComponent(JSON.stringify(scores, null, 2))));
+
+                    await fetch(url, {
+                        method: 'PUT',
+                        headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: `Score de ${pseudo}`, content: updatedContent, sha: data.sha })
+                    });
+                }
+                setTimeout(fetchScores, 1500);
+            } catch (err) { console.error("Sauvegarde score:", err); }
+>>>>>>> e9b1df455171132b78c2beae2a9e4d885c274c0e
         }
 
         async function fetchMessagesFromGitHub() {
             const list = document.getElementById("messages-list");
             const messages = await fetchFileContent(GITHUB_CONFIG.messagesFile);
+<<<<<<< HEAD
 
             // On ne vide pas complètement si on a déjà des messages optimistes récents
+=======
+>>>>>>> e9b1df455171132b78c2beae2a9e4d885c274c0e
             list.innerHTML = "";
 
             if (!messages || messages.length === 0) {
@@ -680,6 +745,7 @@
 
             btnSend.disabled = true;
             btnSend.innerText = "Envoi...";
+<<<<<<< HEAD
 
             // 1. Affichage immédiat (optimistic UI) — visible tout de suite sur cet appareil
             const loadingMsg = document.getElementById("loading-msg");
@@ -706,6 +772,42 @@
             } catch (err) {
                 console.error("Ajout message:", err);
                 setSyncStatus("⚠️ Message visible ici seulement (GitHub inaccessible) — " + err.message, true);
+=======
+
+            try {
+                // Sauvegarde locale immédiate
+                const existing = await fetchFileContent(GITHUB_CONFIG.messagesFile);
+                existing.push({ name: name, text: text, date: new Date().toISOString() });
+                localStorage.setItem("backup_" + GITHUB_CONFIG.messagesFile, JSON.stringify(existing));
+
+                // Tentative GitHub API
+                const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.messagesFile}`;
+                const res = await fetch(url, { headers: { 'Authorization': `token ${GITHUB_CONFIG.token}` } });
+                if (res.ok) {
+                    const data = await res.json();
+                    const cleanedBase64 = data.content.replace(/\s/g, '');
+                    let messages = [];
+                    try {
+                        const decoded = decodeURIComponent(escape(atob(cleanedBase64)));
+                        messages = decoded ? JSON.parse(decoded) : [];
+                        if (!Array.isArray(messages)) messages = [];
+                    } catch (e) { messages = []; }
+                    messages.push({ name: name, text: text, date: new Date().toISOString() });
+                    const updatedContent = btoa(unescape(encodeURIComponent(JSON.stringify(messages, null, 2))));
+
+                    await fetch(url, {
+                        method: 'PUT',
+                        headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: `Message de ${name}`, content: updatedContent, sha: data.sha })
+                    });
+                }
+
+                msgInput.value = "";
+                setTimeout(fetchMessagesFromGitHub, 1500);
+            } catch (err) {
+                console.error("Ajout message:", err);
+                alert("Erreur lors de l'envoi.");
+>>>>>>> e9b1df455171132b78c2beae2a9e4d885c274c0e
             } finally {
                 btnSend.disabled = false;
                 btnSend.innerText = "Envoyer";
@@ -722,7 +824,20 @@
             const item = document.createElement("div");
             item.className = "msg-item";
             item.innerHTML = `<div class="msg-header">${escapeHtml(name)}</div><div>💬 ${escapeHtml(text)}</div>`;
+<<<<<<< HEAD
             list.insertBefore(item, list.firstChild); // plus récents en haut
+        }
+
+        function escapeHtml(unsafe) {
+            return String(unsafe)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+=======
+            list.appendChild(item);
+>>>>>>> e9b1df455171132b78c2beae2a9e4d885c274c0e
         }
 
         function escapeHtml(unsafe) {
@@ -780,6 +895,7 @@
         document.addEventListener("DOMContentLoaded", () => {
             fetchMessagesFromGitHub();
             fetchScores();
+<<<<<<< HEAD
 
             // Rafraîchissement automatique toutes les 20 secondes
             // → les messages postés sur un autre appareil apparaissent ici
@@ -787,6 +903,8 @@
                 fetchMessagesFromGitHub();
                 fetchScores();
             }, 20000);
+=======
+>>>>>>> e9b1df455171132b78c2beae2a9e4d885c274c0e
         });
     </script>
 </body>
