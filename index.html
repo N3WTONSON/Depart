@@ -386,8 +386,10 @@
             scoresFile: "scores.json"
         };
 
-        // COMPTE À REBOURS
-        const targetDate = new Date("November 10, 2026 16:00:00").getTime();
+        // CORRECTION DU COMPTE À REBOURS
+        // ISO string avec le fuseau horaire explicite (+01:00 pour la France)
+        const targetDate = new Date("2026-11-10T16:00:00+01:00").getTime();
+
         function updateCountdown() {
             const now = new Date().getTime();
             const difference = targetDate - now;
@@ -407,13 +409,15 @@
             const m = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
             const s = Math.floor((difference % (1000 * 60)) / 1000);
 
-            document.getElementById("days").innerText = d < 10 ? "0" + d : d;
-            document.getElementById("hours").innerText = h < 10 ? "0" + h : h;
-            document.getElementById("minutes").innerText = m < 10 ? "0" + m : m;
-            document.getElementById("seconds").innerText = s < 10 ? "0" + s : s;
+            document.getElementById("days").innerText = String(d).padStart(2, '0');
+            document.getElementById("hours").innerText = String(h).padStart(2, '0');
+            document.getElementById("minutes").innerText = String(m).padStart(2, '0');
+            document.getElementById("seconds").innerText = String(s).padStart(2, '0');
         }
-        setInterval(updateCountdown, 1000);
+
+        // Lancement immédiat puis rafraîchissement toutes les secondes
         updateCountdown();
+        setInterval(updateCountdown, 1000);
 
         // BANQUE DE QUESTIONS (3 questions / jour jusqu'au 10 Novembre)
         const dailyQuestions = {
@@ -552,7 +556,7 @@
                         tbody.appendChild(tr);
                     });
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Aucun score pour l'instant. Soyez le premier !</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Aucun score pour l\'instant. Soyez le premier !</td></tr>';
                 }
             } catch (err) { console.error(err); }
         }
