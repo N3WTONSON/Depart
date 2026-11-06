@@ -127,10 +127,11 @@
     </div>
 
     <script>
-        // ========== CONFIG EXTENDSCLASS (CORS OK + écriture gratuite) ==========
-        const STORAGE = {
-            messages: "https://extendsclass.com/api/json-storage/bin/baaaace",
-            scores:   "https://extendsclass.com/api/json-storage/bin/cbecadf"
+        // ========== CONFIG JSONBIN ==========
+        const JSONBIN = {
+            masterKey: "$2a$10$mWeYcT727qaKqXhmo8s1R.HbHEisqK7oNCjkk8fgCV7p.OQjeeD2C",
+            messages: "6aedcbf3ac6210605a7238c3",
+            scores:   "6aedcc1dac6210605a72394d"
         };
 
         // ========== COMPTE À REBOURS ==========
@@ -230,7 +231,7 @@
             saveScore(userPseudo, quizScore);
         }
 
-        // ========== STOCKAGE ==========
+        // ========== STOCKAGE JSONBIN ==========
         function setSyncStatus(text, isError = false) {
             const el = document.getElementById("sync-status");
             if (el) {
@@ -239,45 +240,47 @@
             }
         }
 
-        async function loadData(url) {
+        async function loadData(binId) {
             try {
-                const res = await fetch(url + "?t=" + Date.now(), { cache: "no-store" });
+                const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+                    headers: { "X-Master-Key": JSONBIN.masterKey },
+                    cache: "no-store"
+                });
                 if (!res.ok) throw new Error("HTTP " + res.status);
-                const text = await res.text();
-                let data;
-                try { data = JSON.parse(text); } catch { data = []; }
-                // Parfois ExtendsClass renvoie une string JSON double-encodée
-                if (typeof data === "string") {
-                    try { data = JSON.parse(data); } catch { data = []; }
-                }
-                return Array.isArray(data) ? data : [];
+                const json = await res.json();
+                let arr = json.record;
+                if (!Array.isArray(arr)) arr = [];
+                // Enlever le marqueur d'init
+                return arr.filter(item => !item._init);
             } catch (e) {
                 console.warn(e);
-                const key = "backup_" + url.split("/").pop();
-                try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; }
+                try {
+                    return JSON.parse(localStorage.getItem("backup_" + binId) || "[]");
+                } catch {
+                    return [];
+                }
             }
         }
 
-        async function saveData(url, arr) {
-            console.log("Envoi vers", url, arr);
-            const res = await fetch(url, {
+        async function saveData(binId, arr) {
+            const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
                 method: "PUT",
-                mode: "cors",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Master-Key": JSONBIN.masterKey
+                },
                 body: JSON.stringify(arr)
             });
-            console.log("Réponse status:", res.status);
-            const text = await res.text();
-            console.log("Réponse body:", text.slice(0, 200));
             if (!res.ok) {
-                throw new Error("HTTP " + res.status + " → " + text.slice(0, 100));
+                const text = await res.text().catch(() => "");
+                throw new Error("HTTP " + res.status + " " + text.slice(0, 80));
             }
-            localStorage.setItem("backup_" + url.split("/").pop(), JSON.stringify(arr));
+            localStorage.setItem("backup_" + binId, JSON.stringify(arr));
         }
 
         async function fetchMessages() {
             const list = document.getElementById("messages-list");
-            const messages = await loadData(STORAGE.messages);
+            const messages = await loadData(JSONBIN.messages);
             list.innerHTML = "";
             if (!messages.length) {
                 list.innerHTML = '<div class="msg-item" style="text-align:center;color:var(--text-secondary);">Soyez le premier à laisser un message !</div>';
@@ -291,7 +294,7 @@
 
         async function fetchScores() {
             const tbody = document.getElementById("scoreboard-body");
-            const scores = await loadData(STORAGE.scores);
+            const scores = await loadData(JSONBIN.scores);
             tbody.innerHTML = "";
             if (!scores.length) {
                 tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Aucun score pour l\'instant.</td></tr>';
@@ -321,16 +324,15 @@
             btn.disabled = true;
             btn.innerText = "Envoi...";
 
-            // Affichage immédiat
             const loading = document.getElementById("loading-msg");
             if (loading) loading.remove();
             appendMessageToDOM(name, text);
             document.getElementById("msg-input").value = "";
 
             try {
-                const messages = await loadData(STORAGE.messages);
+                const messages = await loadData(JSONBIN.messages);
                 messages.push({ name, text, date: new Date().toISOString() });
-                await saveData(STORAGE.messages, messages);
+                await saveData(JSONBIN.messages, messages);
                 setSyncStatus("✅ Message synchronisé sur tous les appareils");
             } catch (e) {
                 console.error(e);
@@ -343,11 +345,13 @@
 
         async function saveScore(pseudo, score) {
             try {
-                const scores = await loadData(STORAGE.scores);
+                const scores = await loadData(JSONBIN.scores);
                 scores.push({ pseudo, score, date: new Date().toISOString() });
-                await saveData(STORAGE.scores, scores);
+                await saveData(JSONBIN.scores, scores);
                 setTimeout(fetchScores, 500);
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                console.error(e);
+            }
         }
 
         function appendMessageToDOM(name, text) {
