@@ -129,8 +129,8 @@
     <script>
         // ========== CONFIG EXTENDSCLASS (CORS OK + écriture gratuite) ==========
         const STORAGE = {
-            messages: "https://extendsclass.com/api/json-storage/bin/daacdaf",
-            scores:   "https://extendsclass.com/api/json-storage/bin/bbdefda"
+            messages: "https://extendsclass.com/api/json-storage/bin/baaaace",
+            scores:   "https://extendsclass.com/api/json-storage/bin/cbecadf"
         };
 
         // ========== COMPTE À REBOURS ==========
@@ -243,7 +243,13 @@
             try {
                 const res = await fetch(url + "?t=" + Date.now(), { cache: "no-store" });
                 if (!res.ok) throw new Error("HTTP " + res.status);
-                const data = await res.json();
+                const text = await res.text();
+                let data;
+                try { data = JSON.parse(text); } catch { data = []; }
+                // Parfois ExtendsClass renvoie une string JSON double-encodée
+                if (typeof data === "string") {
+                    try { data = JSON.parse(data); } catch { data = []; }
+                }
                 return Array.isArray(data) ? data : [];
             } catch (e) {
                 console.warn(e);
@@ -253,12 +259,19 @@
         }
 
         async function saveData(url, arr) {
+            console.log("Envoi vers", url, arr);
             const res = await fetch(url, {
                 method: "PUT",
+                mode: "cors",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(arr)
             });
-            if (!res.ok) throw new Error("Écriture échouée " + res.status);
+            console.log("Réponse status:", res.status);
+            const text = await res.text();
+            console.log("Réponse body:", text.slice(0, 200));
+            if (!res.ok) {
+                throw new Error("HTTP " + res.status + " → " + text.slice(0, 100));
+            }
             localStorage.setItem("backup_" + url.split("/").pop(), JSON.stringify(arr));
         }
 
@@ -321,7 +334,7 @@
                 setSyncStatus("✅ Message synchronisé sur tous les appareils");
             } catch (e) {
                 console.error(e);
-                setSyncStatus("⚠️ Erreur d'envoi", true);
+                setSyncStatus("⚠️ " + (e.message || "Erreur d'envoi"), true);
             } finally {
                 btn.disabled = false;
                 btn.innerText = "Envoyer";
