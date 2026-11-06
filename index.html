@@ -1,748 +1,655 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compte à rebours & Quiz - Départ de Jimmy</title>
-    <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --card-border: #334155;
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --accent-glow: #8b5cf6;
-            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-        }
+    [data-theme="light"] {
+        --bg-color: #f8fafc;
+        --card-bg: #ffffff;
+        --card-border: #e2e8f0;
+        --text-primary: #0f172a;
+        --text-secondary: #64748b;
+        --accent-glow: #6366f1;
+        --accent-gradient: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
+    }
 
-        [data-theme="light"] {
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --card-border: #e2e8f0;
-            --text-primary: #0f172a;
-            --text-secondary: #64748b;
-            --accent-glow: #6366f1;
-            --accent-gradient: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
-        }
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        transition: background-color 0.3s, color 0.3s;
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            transition: background-color 0.3s, color 0.3s;
-        }
+    body {
+        min-height: 100vh;
+        background-color: var(--bg-color);
+        color: var(--text-primary);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+        position: relative;
+        overflow-x: hidden;
+    }
 
-        body {
-            min-height: 100vh;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem 1rem;
-            position: relative;
-            overflow-x: hidden;
-        }
+    canvas#confetti-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 999;
+    }
 
-        canvas#confetti-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
-            z-index: 999;
-        }
+    .theme-toggle {
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        color: var(--text-primary);
+        padding: 0.6rem 1.2rem;
+        border-radius: 50px;
+        cursor: pointer;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
 
-        .theme-toggle {
-            position: absolute;
-            top: 1.5rem;
-            right: 1.5rem;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            color: var(--text-primary);
-            padding: 0.6rem 1.2rem;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
+    .container {
+        max-width: 800px;
+        width: 100%;
+        text-align: center;
+        z-index: 1;
+    }
 
-        .container {
-            max-width: 800px;
-            width: 100%;
-            text-align: center;
-            z-index: 1;
-        }
+    .header {
+        margin-bottom: 2.5rem;
+    }
 
-        .header {
-            margin-bottom: 2.5rem;
-        }
+    .badge {
+        display: inline-block;
+        padding: 0.4rem 1.2rem;
+        background: var(--accent-gradient);
+        color: white;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+    }
 
-        .badge {
-            display: inline-block;
-            padding: 0.4rem 1.2rem;
-            background: var(--accent-gradient);
-            color: white;
-            border-radius: 50px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            margin-bottom: 1rem;
-        }
+    h1 {
+        font-size: 2.8rem;
+        font-weight: 800;
+        margin-bottom: 0.8rem;
+        line-height: 1.2;
+    }
 
-        h1 {
-            font-size: 2.8rem;
-            font-weight: 800;
-            margin-bottom: 0.8rem;
-            line-height: 1.2;
-        }
+    p.subtitle {
+        font-size: 1.2rem;
+        color: var(--text-secondary);
+    }
 
-        p.subtitle {
-            font-size: 1.2rem;
-            color: var(--text-secondary);
-        }
+    .countdown-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.2rem;
+        margin-bottom: 2.5rem;
+    }
 
-        .countdown-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1.2rem;
-            margin-bottom: 2.5rem;
-        }
+    .time-box {
+        background-color: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 20px;
+        padding: 1.8rem 1rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
 
-        .time-box {
-            background-color: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 20px;
-            padding: 1.8rem 1rem;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-        }
+    .time-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--accent-gradient);
+    }
 
-        .time-box::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: var(--accent-gradient);
-        }
+    .number {
+        font-size: 3.2rem;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+        color: var(--accent-glow);
+    }
 
-        .number {
-            font-size: 3.2rem;
-            font-weight: 800;
-            line-height: 1;
-            margin-bottom: 0.5rem;
-            color: var(--accent-glow);
-        }
+    .label {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--text-secondary);
+        font-weight: 600;
+    }
 
-        .label {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--text-secondary);
-            font-weight: 600;
-        }
+    .section-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 24px;
+        padding: 2rem;
+        text-align: left;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        margin-bottom: 2rem;
+    }
 
-        .section-card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 24px;
-            padding: 2rem;
-            text-align: left;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            margin-bottom: 2rem;
-        }
+    .section-card h2 {
+        font-size: 1.4rem;
+        margin-bottom: 0.5rem;
+    }
 
-        .section-card h2 {
-            font-size: 1.4rem;
-            margin-bottom: 0.5rem;
-        }
+    .desc {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+    }
 
-        .desc {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            margin-bottom: 1.5rem;
-        }
+    .input-group {
+        display: flex;
+        gap: 0.8rem;
+        margin-bottom: 1.5rem;
+    }
 
-        .input-group {
-            display: flex;
-            gap: 0.8rem;
-            margin-bottom: 1.5rem;
-        }
+    input {
+        flex: 1;
+        padding: 0.9rem 1.2rem;
+        border-radius: 12px;
+        border: 1px solid var(--card-border);
+        background-color: var(--bg-color);
+        color: var(--text-primary);
+        font-size: 1rem;
+        outline: none;
+    }
 
-        input {
-            flex: 1;
-            padding: 0.9rem 1.2rem;
-            border-radius: 12px;
-            border: 1px solid var(--card-border);
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            font-size: 1rem;
-            outline: none;
-        }
+    button.btn {
+        padding: 0.9rem 1.8rem;
+        border-radius: 12px;
+        border: none;
+        background: var(--accent-gradient);
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+    }
 
-        button.btn {
-            padding: 0.9rem 1.8rem;
-            border-radius: 12px;
-            border: none;
-            background: var(--accent-gradient);
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-        }
+    .quiz-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        margin-top: 1rem;
+    }
 
-        .quiz-options {
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-            margin-top: 1rem;
-        }
+    .quiz-option {
+        background-color: var(--bg-color);
+        border: 1px solid var(--card-border);
+        padding: 0.9rem 1.2rem;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        text-align: left;
+    }
 
-        .quiz-option {
-            background-color: var(--bg-color);
-            border: 1px solid var(--card-border);
-            padding: 0.9rem 1.2rem;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-            text-align: left;
-        }
+    .quiz-option:hover {
+        border-color: var(--accent-glow);
+    }
 
-        .quiz-option:hover {
-            border-color: var(--accent-glow);
-        }
+    .scoreboard-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
 
-        .scoreboard-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
+    .scoreboard-table th, .scoreboard-table td {
+        padding: 0.8rem 1.2rem;
+        text-align: left;
+        border-bottom: 1px solid var(--card-border);
+    }
 
-        .scoreboard-table th, .scoreboard-table td {
-            padding: 0.8rem 1.2rem;
-            text-align: left;
-            border-bottom: 1px solid var(--card-border);
-        }
+    .scoreboard-table th {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+    }
 
-        .scoreboard-table th {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            text-transform: uppercase;
-        }
+    .messages-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        max-height: 250px;
+        overflow-y: auto;
+    }
 
-        .messages-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-            max-height: 250px;
-            overflow-y: auto;
-        }
+    .msg-item {
+        background-color: var(--bg-color);
+        border: 1px solid var(--card-border);
+        padding: 1rem 1.2rem;
+        border-radius: 10px;
+        font-size: 0.95rem;
+    }
 
-        .msg-item {
-            background-color: var(--bg-color);
-            border: 1px solid var(--card-border);
-            padding: 1rem 1.2rem;
-            border-radius: 10px;
-            font-size: 0.95rem;
-        }
+    .msg-header {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--accent-glow);
+        margin-bottom: 4px;
+    }
 
-        .msg-header {
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: var(--accent-glow);
-            margin-bottom: 4px;
-        }
+    .reward-banner {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        padding: 0.8rem;
+        border-radius: 12px;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
 
-        .reward-banner {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: white;
-            padding: 0.8rem;
-            border-radius: 12px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 1rem;
-        }
+    .day-indicator {
+        font-size: 0.85rem;
+        color: #a855f7;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
 
-        .day-indicator {
-            font-size: 0.85rem;
-            color: #a855f7;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
+    @media (max-width: 650px) {
+        .countdown-grid { grid-template-columns: repeat(2, 1fr); }
+        h1 { font-size: 2rem; }
+        .number { font-size: 2.5rem; }
+        .input-group { flex-direction: column; }
+    }
+</style>
 
-        @media (max-width: 650px) {
-            .countdown-grid { grid-template-columns: repeat(2, 1fr); }
-            h1 { font-size: 2rem; }
-            .number { font-size: 2.5rem; }
-            .input-group { flex-direction: column; }
-        }
-    </style>
-</head>
-<body>
 
-    <canvas id="confetti-canvas"></canvas>
+<canvas id="confetti-canvas"></canvas>
 
-    <button class="theme-toggle" onclick="toggleTheme()">
-        <span id="theme-icon">🌙</span> Mode
-    </button>
+<button class="theme-toggle" onclick="toggleTheme()">
+    <span id="theme-icon">🌙</span> Mode
+</button>
 
-    <div class="container">
-        <div class="header">
-            <span class="badge">Compte à Rebours Officiel</span>
-            <h1 id="title">Le Décompte de Jimmy ! 🚀</h1>
-            <p class="subtitle">Départ prévu le 10 Novembre à 16h00</p>
+<div class="container">
+    <div class="header">
+        <span class="badge">Compte à Rebours Officiel</span>
+        <h1 id="title">Le Décompte de Jimmy ! 🚀</h1>
+        <p class="subtitle">Départ prévu le 10 Novembre à 16h00</p>
+    </div>
+
+    <div class="countdown-grid">
+        <div class="time-box">
+            <div class="number" id="days">00</div>
+            <div class="label">Jours</div>
         </div>
-
-        <div class="countdown-grid">
-            <div class="time-box">
-                <div class="number" id="days">00</div>
-                <div class="label">Jours</div>
-            </div>
-            <div class="time-box">
-                <div class="number" id="hours">00</div>
-                <div class="label">Heures</div>
-            </div>
-            <div class="time-box">
-                <div class="number" id="minutes">00</div>
-                <div class="label">Minutes</div>
-            </div>
-            <div class="time-box">
-                <div class="number" id="seconds">00</div>
-                <div class="label">Secondes</div>
-            </div>
+        <div class="time-box">
+            <div class="number" id="hours">00</div>
+            <div class="label">Heures</div>
         </div>
-
-        <!-- SECTION QUIZ -->
-        <div class="section-card">
-            <h2>🏆 Grand Quiz de Départ (3 questions / jour)</h2>
-            <div class="reward-banner">🍺 Le gagnant du classement remporte une boisson !</div>
-            
-            <div id="quiz-registration">
-                <p class="desc">Entrez votre pseudo pour participer au classement :</p>
-                <div class="input-group">
-                    <input type="text" id="quiz-pseudo" placeholder="Votre Pseudo (ex: Nico)">
-                    <button class="btn" onclick="startQuiz()">Lancer le Quiz du jour</button>
-                </div>
-            </div>
-
-            <div id="quiz-box" style="display: none;">
-                <div class="day-indicator" id="quiz-progress-text">Question 1/3</div>
-                <h3 id="quiz-question-title" style="margin-bottom: 1rem;">Question</h3>
-                <div class="quiz-options" id="quiz-options"></div>
-            </div>
-
-            <div id="quiz-result" style="display: none; text-align: center;">
-                <h3 id="quiz-final-score"></h3>
-                <p class="desc" style="margin-top: 0.5rem;">Votre score global a été mis à jour dans le classement !</p>
-            </div>
-
-            <h3 style="margin-top: 2rem; font-size: 1.1rem;">🥇 Tableau des Scores</h3>
-            <table class="scoreboard-table">
-                <thead>
-                    <tr>
-                        <th>Rang</th>
-                        <th>Pseudo</th>
-                        <th>Score Total</th>
-                    </tr>
-                </thead>
-                <tbody id="scoreboard-body">
-                    <tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">Chargement du classement...</td></tr>
-                </tbody>
-            </table>
+        <div class="time-box">
+            <div class="number" id="minutes">00</div>
+            <div class="label">Minutes</div>
         </div>
-
-        <!-- SECTION MUR DE MOTS DOUX -->
-        <div class="section-card">
-            <h2>💬 Laissez un mot doux à Jimmy</h2>
-            <p class="desc">Enregistré directement sur le dépôt GitHub.</p>
-            
-            <div class="input-group">
-                <input type="text" id="name-input" placeholder="Votre prénom" style="flex: 0.3;">
-                <input type="text" id="msg-input" placeholder="Votre message..." onkeypress="if(event.key==='Enter') addMessage()">
-                <button class="btn" id="btn-send" onclick="addMessage()">Envoyer</button>
-            </div>
-            <div class="messages-list" id="messages-list">
-                <div class="msg-item" id="loading-msg" style="text-align: center; color: var(--text-secondary);">Chargement des messages...</div>
-            </div>
+        <div class="time-box">
+            <div class="number" id="seconds">00</div>
+            <div class="label">Secondes</div>
         </div>
     </div>
 
-    <script>
-        const GITHUB_CONFIG = {
-            owner: "jimmyruti",
-            repo: "depart-jimmy",
-            token: "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",
-            messagesFile: "messages.json",
-            scoresFile: "scores.json"
-        };
+    <!-- SECTION QUIZ -->
+    <div class="section-card">
+        <h2>🏆 Grand Quiz de Départ (3 questions / jour)</h2>
+        <div class="reward-banner">🍺 Le gagnant du classement remporte une boisson !</div>
+        
+        <div id="quiz-registration">
+            <p class="desc">Entrez votre pseudo pour participer au classement :</p>
+            <div class="input-group">
+                <input type="text" id="quiz-pseudo" placeholder="Votre Pseudo (ex: Nico)">
+                <button class="btn" onclick="startQuiz()">Lancer le Quiz du jour</button>
+            </div>
+        </div>
 
-        // COMPTE À REBOURS
-        const targetDate = new Date("2026-11-10T16:00:00+01:00").getTime();
+        <div id="quiz-box" style="display: none;">
+            <div class="day-indicator" id="quiz-progress-text">Question 1/3</div>
+            <h3 id="quiz-question-title" style="margin-bottom: 1rem;">Question</h3>
+            <div class="quiz-options" id="quiz-options"></div>
+        </div>
 
-        function updateCountdown() {
-            const now = new Date().getTime();
-            const difference = targetDate - now;
+        <div id="quiz-result" style="display: none; text-align: center;">
+            <h3 id="quiz-final-score"></h3>
+            <p class="desc" style="margin-top: 0.5rem;">Votre score global a été pris en compte !</p>
+        </div>
 
-            if (difference <= 0) {
-                document.getElementById("days").innerText = "00";
-                document.getElementById("hours").innerText = "00";
-                document.getElementById("minutes").innerText = "00";
-                document.getElementById("seconds").innerText = "00";
-                document.getElementById("title").innerText = "C'est l'heure du départ ! 🥳";
-                startConfetti();
-                return;
+        <h3 style="margin-top: 2rem; font-size: 1.1rem;">🥇 Tableau des Scores</h3>
+        <table class="scoreboard-table">
+            <thead>
+                <tr>
+                    <th>Rang</th>
+                    <th>Pseudo</th>
+                    <th>Score Total</th>
+                </tr>
+            </thead>
+            <tbody id="scoreboard-body">
+                <tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">Chargement du classement...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- SECTION MUR DE MOTS DOUX -->
+    <div class="section-card">
+        <h2>💬 Laissez un mot doux à Jimmy</h2>
+        <p class="desc">Laissez un souvenir ou un mot d'encouragement avant son départ.</p>
+        
+        <div class="input-group">
+            <input type="text" id="name-input" placeholder="Votre prénom" style="flex: 0.3;">
+            <input type="text" id="msg-input" placeholder="Votre message..." onkeypress="if(event.key==='Enter') addMessage()">
+            <button class="btn" id="btn-send" onclick="addMessage()">Envoyer</button>
+        </div>
+        <div class="messages-list" id="messages-list">
+            <div class="msg-item" id="loading-msg" style="text-align: center; color: var(--text-secondary);">Chargement des messages...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const BASE_URL = "https://raw.githubusercontent.com/jimmyruti/depart-jimmy/main/";
+
+    // COMPTE À REBOURS
+    const targetDate = new Date("2026-11-10T16:00:00+01:00").getTime();
+
+    function updateCountdown() {
+        const now = new Date().getTime();
+        const difference = targetDate - now;
+
+        if (difference <= 0) {
+            document.getElementById("days").innerText = "00";
+            document.getElementById("hours").innerText = "00";
+            document.getElementById("minutes").innerText = "00";
+            document.getElementById("seconds").innerText = "00";
+            document.getElementById("title").innerText = "C'est l'heure du départ ! 🥳";
+            startConfetti();
+            return;
+        }
+
+        const d = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const h = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const m = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((difference % (1000 * 60)) / 1000);
+
+        document.getElementById("days").innerText = String(d).padStart(2, '0');
+        document.getElementById("hours").innerText = String(h).padStart(2, '0');
+        document.getElementById("minutes").innerText = String(m).padStart(2, '0');
+        document.getElementById("seconds").innerText = String(s).padStart(2, '0');
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+
+    // QUESTIONS DU QUIZ
+    const dailyQuestions = {
+        "2026-11-06": [
+            { question: "Quel est l'élément chimique représenté par le symbole 'O' ?", options: ["Or", "Oxygène", "Osmium", "Ozone"], answer: 1 },
+            { question: "Quelle planète est la plus proche du Soleil ?", options: ["Vénus", "Mars", "Mercure", "Jupiter"], answer: 2 },
+            { question: "Quel est le port par défaut du protocole HTTPS ?", options: ["80", "8080", "443", "21"], answer: 2 }
+        ],
+        "2026-11-07": [
+            { question: "En quelle année est sorti le premier iPhone ?", options: ["2005", "2007", "2009", "2010"], answer: 1 },
+            { question: "Quelle est la capitale du Japon ?", options: ["Kyoto", "Osaka", "Tokyo", "Hiroshima"], answer: 2 },
+            { question: "Combien d'octets y a-t-il dans un Kilooctet (Ko) ?", options: ["1000", "1024", "512", "2048"], answer: 1 }
+        ],
+        "2026-11-08": [
+            { question: "Quel inventeur est associé au courant alternatif ?", options: ["Edison", "Tesla", "Bell", "Marconi"], answer: 1 },
+            { question: "Quel est l'océan le plus grand de la Terre ?", options: ["Atlantique", "Indien", "Pacifique", "Arctique"], answer: 2 },
+            { question: "Que signifie l'acronyme 'CPU' en informatique ?", options: ["Central Processing Unit", "Computer Personal Unit", "Control Power Unit", "Core Program Utility"], answer: 0 }
+        ],
+        "2026-11-09": [
+            { question: "Quel monument parisien a été construit pour l'Exposition Universelle de 1889 ?", options: ["L'Arc de Triomphe", "La Tour Eiffel", "Le Louvre", "Le Sacré-Cœur"], answer: 1 },
+            { question: "Quel langage web est utilisé pour la mise en forme du style ?", options: ["HTML", "JavaScript", "CSS", "Python"], answer: 2 },
+            { question: "Combien de côtés possède un hexagone ?", options: ["5", "6", "7", "8"], answer: 1 }
+        ],
+        "2026-11-10": [
+            { question: "Quelle est la boisson rafraîchissante incontournable après un décompte réussi ?", options: ["Limonade", "Une bonne bière fraîche", "Un café", "De l'eau tiède"], answer: 1 },
+            { question: "Quel animal est le symbole du système d'exploitation Linux ?", options: ["Un gnou", "Un manchot (Tux)", "Un serpent", "Un dauphin"], answer: 1 },
+            { question: "Combien de secondes y a-t-il dans une minute ?", options: ["50", "60", "100", "90"], answer: 1 }
+        ]
+    };
+
+    let currentActiveQuestions = [];
+    let currentQuestionIdx = 0;
+    let quizScore = 0;
+    let userPseudo = "";
+
+    function getTodayQuestions() {
+        const todayStr = new Date().toISOString().split('T')[0];
+        let questionsPool = [];
+
+        Object.keys(dailyQuestions).forEach(date => {
+            if (date <= todayStr) {
+                questionsPool = questionsPool.concat(dailyQuestions[date]);
             }
-
-            const d = Math.floor(difference / (1000 * 60 * 60 * 24));
-            const h = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const m = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-            const s = Math.floor((difference % (1000 * 60)) / 1000);
-
-            document.getElementById("days").innerText = String(d).padStart(2, '0');
-            document.getElementById("hours").innerText = String(h).padStart(2, '0');
-            document.getElementById("minutes").innerText = String(m).padStart(2, '0');
-            document.getElementById("seconds").innerText = String(s).padStart(2, '0');
-        }
-
-        updateCountdown();
-        setInterval(updateCountdown, 1000);
-
-        // QUESTIONS
-        const dailyQuestions = {
-            "2026-11-06": [
-                { question: "Quel est l'élément chimique représenté par le symbole 'O' ?", options: ["Or", "Oxygène", "Osmium", "Ozone"], answer: 1 },
-                { question: "Quelle planète est la plus proche du Soleil ?", options: ["Vénus", "Mars", "Mercure", "Jupiter"], answer: 2 },
-                { question: "Quel est le port par défaut du protocole HTTPS ?", options: ["80", "8080", "443", "21"], answer: 2 }
-            ],
-            "2026-11-07": [
-                { question: "En quelle année est sorti le premier iPhone ?", options: ["2005", "2007", "2009", "2010"], answer: 1 },
-                { question: "Quelle est la capitale du Japon ?", options: ["Kyoto", "Osaka", "Tokyo", "Hiroshima"], answer: 2 },
-                { question: "Combien d'octets y a-t-il dans un Kilooctet (Ko) ?", options: ["1000", "1024", "512", "2048"], answer: 1 }
-            ],
-            "2026-11-08": [
-                { question: "Quel inventeur est associé au courant alternatif ?", options: ["Edison", "Tesla", "Bell", "Marconi"], answer: 1 },
-                { question: "Quel est l'océan le plus grand de la Terre ?", options: ["Atlantique", "Indien", "Pacifique", "Arctique"], answer: 2 },
-                { question: "Que signifie l'acronyme 'CPU' en informatique ?", options: ["Central Processing Unit", "Computer Personal Unit", "Control Power Unit", "Core Program Utility"], answer: 0 }
-            ],
-            "2026-11-09": [
-                { question: "Quel monument parisien a été construit pour l'Exposition Universelle de 1889 ?", options: ["L'Arc de Triomphe", "La Tour Eiffel", "Le Louvre", "Le Sacré-Cœur"], answer: 1 },
-                { question: "Quel langage web est utilisé pour la mise en forme du style ?", options: ["HTML", "JavaScript", "CSS", "Python"], answer: 2 },
-                { question: "Combien de côtés possède un hexagone ?", options: ["5", "6", "7", "8"], answer: 1 }
-            ],
-            "2026-11-10": [
-                { question: "Quelle est la boisson rafraîchissante incontournable après un décompte réussi ?", options: ["Limonade", "Une bonne bière fraîche", "Un café", "De l'eau tiède"], answer: 1 },
-                { question: "Quel animal est le symbole du système d'exploitation Linux ?", options: ["Un gnou", "Un manchot (Tux)", "Un serpent", "Un dauphin"], answer: 1 },
-                { question: "Combien de secondes y a-t-il dans une minute ?", options: ["50", "60", "100", "90"], answer: 1 }
-            ]
-        };
-
-        let currentActiveQuestions = [];
-        let currentQuestionIdx = 0;
-        let quizScore = 0;
-        let userPseudo = "";
-
-        function getTodayQuestions() {
-            const todayStr = new Date().toISOString().split('T')[0];
-            let questionsPool = [];
-
-            Object.keys(dailyQuestions).forEach(date => {
-                if (date <= todayStr) {
-                    questionsPool = questionsPool.concat(dailyQuestions[date]);
-                }
-            });
-
-            if (questionsPool.length === 0) {
-                Object.keys(dailyQuestions).forEach(date => {
-                    questionsPool = questionsPool.concat(dailyQuestions[date]);
-                });
-            }
-
-            return questionsPool;
-        }
-
-        function startQuiz() {
-            const pseudoInput = document.getElementById("quiz-pseudo");
-            if (!pseudoInput.value.trim()) {
-                alert("Veuillez entrer un pseudo pour jouer.");
-                return;
-            }
-            userPseudo = pseudoInput.value.trim();
-            currentActiveQuestions = getTodayQuestions();
-            currentQuestionIdx = 0;
-            quizScore = 0;
-
-            document.getElementById("quiz-registration").style.display = "none";
-            document.getElementById("quiz-box").style.display = "block";
-            showQuestion();
-        }
-
-        function showQuestion() {
-            const q = currentActiveQuestions[currentQuestionIdx];
-            document.getElementById("quiz-progress-text").innerText = `Question ${currentQuestionIdx + 1} / ${currentActiveQuestions.length}`;
-            document.getElementById("quiz-question-title").innerText = q.question;
-            const optionsContainer = document.getElementById("quiz-options");
-            optionsContainer.innerHTML = "";
-
-            q.options.forEach((opt, index) => {
-                const btn = document.createElement("div");
-                btn.className = "quiz-option";
-                btn.innerText = opt;
-                btn.onclick = () => selectAnswer(index);
-                optionsContainer.appendChild(btn);
-            });
-        }
-
-        function selectAnswer(index) {
-            if (index === currentActiveQuestions[currentQuestionIdx].answer) {
-                quizScore += 10;
-            }
-            currentQuestionIdx++;
-            if (currentQuestionIdx < currentActiveQuestions.length) {
-                showQuestion();
-            } else {
-                finishQuiz();
-            }
-        }
-
-        async function finishQuiz() {
-            document.getElementById("quiz-box").style.display = "none";
-            const resultBox = document.getElementById("quiz-result");
-            resultBox.style.display = "block";
-            document.getElementById("quiz-final-score").innerText = `Bravo ${userPseudo} ! Score : ${quizScore} points 🎯`;
-            saveScoreToGitHub(userPseudo, quizScore);
-        }
-
-        // DECODAGE UNIVERSEL COMPATIBLE TOUS NAVIGATEURS (API + RAW + LOCAL)
-        function parseJsonFromGitHubData(data) {
-            if (Array.isArray(data)) return data;
-            if (typeof data === 'string') {
-                try { return JSON.parse(data); } catch (e) {}
-            }
-            if (data && data.content) {
-                try {
-                    const cleaned = data.content.replace(/[
-\s]/g, '');
-                    const decoded = decodeURIComponent(escape(atob(cleaned)));
-                    return JSON.parse(decoded);
-                } catch (e) {
-                    try {
-                        const rawDecoded = atob(data.content.replace(/[
-\s]/g, ''));
-                        return JSON.parse(rawDecoded);
-                    } catch (e2) {}
-                }
-            }
-            return [];
-        }
-
-        async function fetchGitHubFile(filename) {
-            const cacheBuster = `?t=${Date.now()}`;
-            // 1. Essai API
-            try {
-                const apiRes = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${filename}${cacheBuster}`, {
-                    headers: { 'Authorization': `token ${GITHUB_CONFIG.token}` }
-                });
-                if (apiRes.ok) {
-                    const data = await apiRes.json();
-                    return { data: parseJsonFromGitHubData(data), sha: data.sha };
-                }
-            } catch (e) {}
-
-            // 2. Fallback RAW
-            try {
-                const rawRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/main/${filename}${cacheBuster}`);
-                if (rawRes.ok) {
-                    const text = await rawRes.text();
-                    return { data: parseJsonFromGitHubData(text), sha: null };
-                }
-            } catch (e) {}
-
-            return { data: [], sha: null };
-        }
-
-        async function fetchScores() {
-            const tbody = document.getElementById("scoreboard-body");
-            const result = await fetchGitHubFile(GITHUB_CONFIG.scoresFile);
-            const scores = result.data;
-            tbody.innerHTML = "";
-
-            if (!scores || scores.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Aucun score pour l'instant. Soyez le premier !</td></tr>';
-                return;
-            }
-
-            const aggregated = {};
-            scores.forEach(s => {
-                if (s && s.pseudo && s.score !== undefined) {
-                    if (!aggregated[s.pseudo] || aggregated[s.pseudo] < s.score) {
-                        aggregated[s.pseudo] = s.score;
-                    }
-                }
-            });
-
-            const sorted = Object.keys(aggregated).map(k => ({ pseudo: k, score: aggregated[k] }));
-            sorted.sort((a, b) => b.score - a.score);
-
-            if (sorted.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Aucun score pour l'instant. Soyez le premier !</td></tr>';
-                return;
-            }
-
-            sorted.forEach((s, i) => {
-                const tr = document.createElement("tr");
-                const badge = i === 0 ? "🥇 " : i === 1 ? "🥈 " : i === 2 ? "🥉 " : "";
-                tr.innerHTML = `<td>${badge}#${i+1}</td><td>${escapeHtml(s.pseudo)}</td><td><strong>${s.score} pts</strong></td>`;
-                tbody.appendChild(tr);
-            });
-        }
-
-        async function saveScoreToGitHub(pseudo, userScore) {
-            const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.scoresFile}`;
-            try {
-                const existing = await fetchGitHubFile(GITHUB_CONFIG.scoresFile);
-                let scores = existing.data || [];
-                scores.push({ pseudo: pseudo, score: userScore, date: new Date().toISOString() });
-
-                const jsonString = JSON.stringify(scores, null, 2);
-                const updatedContent = btoa(unescape(encodeURIComponent(jsonString)));
-
-                await fetch(url, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: `Score de ${pseudo}`, content: updatedContent, sha: existing.sha })
-                });
-                setTimeout(fetchScores, 1200);
-            } catch (err) { console.error("Erreur sauvegarde score:", err); }
-        }
-
-        async function fetchMessagesFromGitHub() {
-            const list = document.getElementById("messages-list");
-            const result = await fetchGitHubFile(GITHUB_CONFIG.messagesFile);
-            const messages = result.data;
-            list.innerHTML = "";
-
-            if (!messages || messages.length === 0) {
-                list.innerHTML = '<div class="msg-item" style="text-align: center; color: var(--text-secondary);">Soyez le premier à laisser un message !</div>';
-                return;
-            }
-
-            messages.slice().reverse().forEach(msg => {
-                if (msg && msg.name && msg.text) {
-                    appendMessageToDOM(msg.name, msg.text);
-                }
-            });
-        }
-
-        async function addMessage() {
-            const nameInput = document.getElementById("name-input");
-            const msgInput = document.getElementById("msg-input");
-            const btnSend = document.getElementById("btn-send");
-
-            const name = nameInput.value.trim() || "Anonyme";
-            const text = msgInput.value.trim();
-            if (!text) return;
-
-            btnSend.disabled = true;
-            btnSend.innerText = "Envoi...";
-
-            const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.messagesFile}`;
-            try {
-                const existing = await fetchGitHubFile(GITHUB_CONFIG.messagesFile);
-                let messages = existing.data || [];
-                messages.push({ name: name, text: text, date: new Date().toISOString() });
-
-                const jsonString = JSON.stringify(messages, null, 2);
-                const updatedContent = btoa(unescape(encodeURIComponent(jsonString)));
-
-                const putRes = await fetch(url, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: `Message de ${name}`, content: updatedContent, sha: existing.sha })
-                });
-
-                if (putRes.ok) {
-                    msgInput.value = "";
-                    setTimeout(fetchMessagesFromGitHub, 1200);
-                } else {
-                    alert("Impossible d'enregistrer le message sur GitHub.");
-                }
-            } catch (err) {
-                console.error("Erreur ajout message:", err);
-                alert("Erreur de connexion lors de l'envoi.");
-            } finally {
-                btnSend.disabled = false;
-                btnSend.innerText = "Envoyer";
-            }
-        }
-
-        function appendMessageToDOM(name, text) {
-            const list = document.getElementById("messages-list");
-            const item = document.createElement("div");
-            item.className = "msg-item";
-            item.innerHTML = `<div class="msg-header">${escapeHtml(name)}</div><div>💬 ${escapeHtml(text)}</div>`;
-            list.appendChild(item);
-        }
-
-        function escapeHtml(unsafe) {
-            return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        }
-
-        function toggleTheme() {
-            const body = document.body;
-            const icon = document.getElementById("theme-icon");
-            if (body.getAttribute("data-theme") === "light") {
-                body.removeAttribute("data-theme");
-                icon.innerText = "🌙";
-            } else {
-                body.setAttribute("data-theme", "light");
-                icon.innerText = "☀️";
-            }
-        }
-
-        function startConfetti() {
-            const canvas = document.getElementById('confetti-canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            const particles = [];
-            const colors = ['#6366f1', '#a855f7', '#ec4899', '#3b82f6', '#10b981', '#f59e0b'];
-            for (let i = 0; i < 150; i++) {
-                particles.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height - canvas.height,
-                    size: Math.random() * 8 + 4,
-                    color: colors[Math.floor(Math.random() * colors.length)],
-                    vy: Math.random() * 3 + 2,
-                    vx: Math.random() * 2 - 1
-                });
-            }
-            function render() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                particles.forEach(p => {
-                    p.y += p.vy;
-                    p.x += p.vx;
-                    if (p.y > canvas.height) p.y = -10;
-                    ctx.fillStyle = p.color;
-                    ctx.fillRect(p.x, p.y, p.size, p.size);
-                });
-                requestAnimationFrame(render);
-            }
-            render();
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            fetchMessagesFromGitHub();
-            fetchScores();
         });
-    </script>
-</body>
-</html>
+
+        if (questionsPool.length === 0) {
+            Object.keys(dailyQuestions).forEach(date => {
+                questionsPool = questionsPool.concat(dailyQuestions[date]);
+            });
+        }
+
+        return questionsPool;
+    }
+
+    function startQuiz() {
+        const pseudoInput = document.getElementById("quiz-pseudo");
+        if (!pseudoInput.value.trim()) {
+            alert("Veuillez entrer un pseudo pour jouer.");
+            return;
+        }
+        userPseudo = pseudoInput.value.trim();
+        currentActiveQuestions = getTodayQuestions();
+        currentQuestionIdx = 0;
+        quizScore = 0;
+
+        document.getElementById("quiz-registration").style.display = "none";
+        document.getElementById("quiz-box").style.display = "block";
+        showQuestion();
+    }
+
+    function showQuestion() {
+        const q = currentActiveQuestions[currentQuestionIdx];
+        document.getElementById("quiz-progress-text").innerText = `Question ${currentQuestionIdx + 1} / ${currentActiveQuestions.length}`;
+        document.getElementById("quiz-question-title").innerText = q.question;
+        const optionsContainer = document.getElementById("quiz-options");
+        optionsContainer.innerHTML = "";
+
+        q.options.forEach((opt, index) => {
+            const btn = document.createElement("div");
+            btn.className = "quiz-option";
+            btn.innerText = opt;
+            btn.onclick = () => selectAnswer(index);
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function selectAnswer(index) {
+        if (index === currentActiveQuestions[currentQuestionIdx].answer) {
+            quizScore += 10;
+        }
+        currentQuestionIdx++;
+        if (currentQuestionIdx < currentActiveQuestions.length) {
+            showQuestion();
+        } else {
+            finishQuiz();
+        }
+    }
+
+    function finishQuiz() {
+        document.getElementById("quiz-box").style.display = "none";
+        const resultBox = document.getElementById("quiz-result");
+        resultBox.style.display = "block";
+        document.getElementById("quiz-final-score").innerText = `Bravo ${userPseudo} ! Score du jour : ${quizScore} points 🎯`;
+        saveLocalScore(userPseudo, quizScore);
+    }
+
+    // SCORES (LOCAL + FETCH RAW)
+    function saveLocalScore(pseudo, score) {
+        let localScores = JSON.parse(localStorage.getItem("jimmy_scores") || "[]");
+        localScores.push({ pseudo: pseudo, score: score });
+        localStorage.setItem("jimmy_scores", JSON.stringify(localScores));
+        fetchScores();
+    }
+
+    async function fetchScores() {
+        const tbody = document.getElementById("scoreboard-body");
+        let scores = JSON.parse(localStorage.getItem("jimmy_scores") || "[]");
+
+        try {
+            const res = await fetch(BASE_URL + "scores.json?t=" + Date.now());
+            if (res.ok) {
+                const remoteScores = await res.json();
+                if (Array.isArray(remoteScores)) {
+                    scores = scores.concat(remoteScores);
+                }
+            }
+        } catch (err) {
+            console.log("Lecture scores réseau ignorée, utilisation des données locales.");
+        }
+
+        tbody.innerHTML = "";
+        if (!scores || scores.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">Aucun score pour l\'instant. Soyez le premier !</td></tr>';
+            return;
+        }
+
+        const aggregated = {};
+        scores.forEach(s => {
+            if (s && s.pseudo && s.score !== undefined) {
+                if (!aggregated[s.pseudo] || aggregated[s.pseudo] < s.score) {
+                    aggregated[s.pseudo] = s.score;
+                }
+            }
+        });
+
+        const sorted = Object.keys(aggregated).map(k => ({ pseudo: k, score: aggregated[k] }));
+        sorted.sort((a, b) => b.score - a.score);
+
+        sorted.forEach((s, i) => {
+            const tr = document.createElement("tr");
+            const badge = i === 0 ? "🥇 " : i === 1 ? "🥈 " : i === 2 ? "🥉 " : "";
+            tr.innerHTML = `<td>${badge}#${i+1}</td><td>${escapeHtml(s.pseudo)}</td><td><strong>${s.score} pts</strong></td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // MESSAGES (LOCAL + FETCH RAW)
+    async function fetchMessagesFromGitHub() {
+        const list = document.getElementById("messages-list");
+        let localMessages = JSON.parse(localStorage.getItem("jimmy_messages") || "[]");
+        let remoteMessages = [];
+
+        try {
+            const res = await fetch(BASE_URL + "messages.json?t=" + Date.now());
+            if (res.ok) {
+                remoteMessages = await res.json();
+            }
+        } catch (err) {
+            console.log("Lecture messages réseau ignorée, utilisation des données locales.");
+        }
+
+        const allMessages = Array.isArray(remoteMessages) ? remoteMessages.concat(localMessages) : localMessages;
+        list.innerHTML = "";
+
+        if (!allMessages || allMessages.length === 0) {
+            list.innerHTML = '<div class="msg-item" style="text-align: center; color: var(--text-secondary);">Soyez le premier à laisser un message !</div>';
+            return;
+        }
+
+        allMessages.slice().reverse().forEach(msg => {
+            if (msg && msg.name && msg.text) {
+                appendMessageToDOM(msg.name, msg.text);
+            }
+        });
+    }
+
+    function addMessage() {
+        const nameInput = document.getElementById("name-input");
+        const msgInput = document.getElementById("msg-input");
+
+        const name = nameInput.value.trim() || "Anonyme";
+        const text = msgInput.value.trim();
+        if (!text) return;
+
+        let localMessages = JSON.parse(localStorage.getItem("jimmy_messages") || "[]");
+        localMessages.push({ name: name, text: text, date: new Date().toISOString() });
+        localStorage.setItem("jimmy_messages", JSON.stringify(localMessages));
+
+        msgInput.value = "";
+        fetchMessagesFromGitHub();
+    }
+
+    function appendMessageToDOM(name, text) {
+        const list = document.getElementById("messages-list");
+        const item = document.createElement("div");
+        item.className = "msg-item";
+        item.innerHTML = `<div class="msg-header">${escapeHtml(name)}</div><div>💬 ${escapeHtml(text)}</div>`;
+        list.appendChild(item);
+    }
+
+    function escapeHtml(unsafe) {
+        return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function toggleTheme() {
+        const body = document.body;
+        const icon = document.getElementById("theme-icon");
+        if (body.getAttribute("data-theme") === "light") {
+            body.removeAttribute("data-theme");
+            icon.innerText = "🌙";
+        } else {
+            body.setAttribute("data-theme", "light");
+            icon.innerText = "☀️";
+        }
+    }
+
+    function startConfetti() {
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const particles = [];
+        const colors = ['#6366f1', '#a855f7', '#ec4899', '#3b82f6', '#10b981', '#f59e0b'];
+        for (let i = 0; i < 150; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height - canvas.height,
+                size: Math.random() * 8 + 4,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                vy: Math.random() * 3 + 2,
+                vx: Math.random() * 2 - 1
+            });
+        }
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.y += p.vy;
+                p.x += p.vx;
+                if (p.y > canvas.height) p.y = -10;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, p.size, p.size);
+            });
+            requestAnimationFrame(render);
+        }
+        render();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        fetchMessagesFromGitHub();
+        fetchScores();
+    });
+</script>
