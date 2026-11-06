@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compte à rebours - Départ de Jimmy</title>
+    <title>Compte à rebours & Quiz - Départ de Jimmy</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -113,7 +113,7 @@
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 1.2rem;
-            margin-bottom: 3rem;
+            margin-bottom: 2.5rem;
         }
 
         .time-box {
@@ -152,21 +152,22 @@
             font-weight: 600;
         }
 
-        .wall-section {
+        .section-card {
             background-color: var(--card-bg);
             border: 1px solid var(--card-border);
             border-radius: 24px;
             padding: 2rem;
             text-align: left;
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            margin-bottom: 2rem;
         }
 
-        .wall-section h2 {
+        .section-card h2 {
             font-size: 1.4rem;
             margin-bottom: 0.5rem;
         }
 
-        .wall-desc {
+        .desc {
             font-size: 0.9rem;
             color: var(--text-secondary);
             margin-bottom: 1.5rem;
@@ -189,11 +190,7 @@
             outline: none;
         }
 
-        input::placeholder {
-            color: var(--text-secondary);
-        }
-
-        button.btn-send {
+        button.btn {
             padding: 0.9rem 1.8rem;
             border-radius: 12px;
             border: none;
@@ -203,18 +200,50 @@
             cursor: pointer;
         }
 
-        .status-notice {
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .quiz-option {
+            background-color: var(--bg-color);
+            border: 1px solid var(--card-border);
+            padding: 0.9rem 1.2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        .quiz-option:hover {
+            border-color: var(--accent-glow);
+        }
+
+        .scoreboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .scoreboard-table th, .scoreboard-table td {
+            padding: 0.8rem 1.2rem;
+            text-align: left;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .scoreboard-table th {
+            color: var(--text-secondary);
             font-size: 0.85rem;
-            margin-top: 0.5rem;
-            color: #a855f7;
-            display: none;
+            text-transform: uppercase;
         }
 
         .messages-list {
             display: flex;
             flex-direction: column;
             gap: 0.8rem;
-            max-height: 250px;
+            max-height: 200px;
             overflow-y: auto;
         }
 
@@ -224,9 +253,8 @@
             padding: 1rem 1.2rem;
             border-radius: 10px;
             font-size: 0.95rem;
-            animation: fadeIn 0.3s ease-in;
         }
-        
+
         .msg-header {
             font-weight: 600;
             font-size: 0.85rem;
@@ -234,15 +262,25 @@
             margin-bottom: 4px;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .reward-banner {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 0.8rem;
+            border-radius: 12px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .day-indicator {
+            font-size: 0.85rem;
+            color: #a855f7;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
         }
 
         @media (max-width: 650px) {
-            .countdown-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+            .countdown-grid { grid-template-columns: repeat(2, 1fr); }
             h1 { font-size: 2rem; }
             .number { font-size: 2.5rem; }
             .input-group { flex-direction: column; }
@@ -283,37 +321,73 @@
             </div>
         </div>
 
-        <div class="wall-section">
+        <!-- SECTION QUIZ -->
+        <div class="section-card">
+            <h2>🏆 Grand Quiz de Départ (3 questions / jour)</h2>
+            <div class="reward-banner">🍺 Le gagnant du classement remporte une boisson !</div>
+            
+            <div id="quiz-registration">
+                <p class="desc">Entrez votre pseudo pour participer au classement :</p>
+                <div class="input-group">
+                    <input type="text" id="quiz-pseudo" placeholder="Votre Pseudo (ex: Nico)">
+                    <button class="btn" onclick="startQuiz()">Lancer le Quiz du jour</button>
+                </div>
+            </div>
+
+            <div id="quiz-box" style="display: none;">
+                <div class="day-indicator" id="quiz-progress-text">Question 1/3</div>
+                <h3 id="quiz-question-title" style="margin-bottom: 1rem;">Question</h3>
+                <div class="quiz-options" id="quiz-options"></div>
+            </div>
+
+            <div id="quiz-result" style="display: none; text-align: center;">
+                <h3 id="quiz-final-score"></h3>
+                <p class="desc" style="margin-top: 0.5rem;">Votre score global a été mis à jour dans le classement ! Revenez demain pour 3 nouvelles questions.</p>
+            </div>
+
+            <h3 style="margin-top: 2rem; font-size: 1.1rem;">🥇 Tableau des Scores</h3>
+            <table class="scoreboard-table">
+                <thead>
+                    <tr>
+                        <th>Rang</th>
+                        <th>Pseudo</th>
+                        <th>Score Total</th>
+                    </tr>
+                </thead>
+                <tbody id="scoreboard-body">
+                    <tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">Chargement du classement...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- SECTION MUR DE MOTS DOUX -->
+        <div class="section-card">
             <h2>💬 Laissez un mot doux à Jimmy</h2>
-            <p class="wall-desc">Les messages sont enregistrés directement sur le dépôt GitHub.</p>
+            <p class="desc">Enregistré directement sur le dépôt GitHub.</p>
             
             <div class="input-group">
                 <input type="text" id="name-input" placeholder="Votre prénom" style="flex: 0.3;">
                 <input type="text" id="msg-input" placeholder="Votre message..." onkeypress="if(event.key==='Enter') addMessage()">
-                <button class="btn-send" id="btn-send" onclick="addMessage()">Envoyer</button>
+                <button class="btn" id="btn-send" onclick="addMessage()">Envoyer</button>
             </div>
-            <div id="status-notice" class="status-notice"></div>
             <div class="messages-list" id="messages-list">
-                <div class="msg-item" id="loading-msg" style="text-align: center; color: var(--text-secondary);">Chargement des messages depuis GitHub...</div>
+                <div class="msg-item" id="loading-msg" style="text-align: center; color: var(--text-secondary);">Chargement des messages...</div>
             </div>
         </div>
     </div>
 
     <script>
-        // ----------------------------------------------------------------
-        // ⚙️ CONFIGURATION GITHUB API
-        // ----------------------------------------------------------------
-        // REMPLACEZ CES VALEURS APRES AVOIR CRÉÉ LE REPO ET LE TOKEN
+        // CONFIGURATION GITHUB API
         const GITHUB_CONFIG = {
-            owner: "VOTRE_PSEUDO_GITHUB",
-            repo: "VOTRE_NOM_DE_REPO",
-            token: "VOTRE_GITHUB_TOKEN_PAT", // GitHub Personal Access Token (scope: repo ou contents)
-            filePath: "messages.json"
+            owner: "jimmyruti",
+            repo: "depart-jimmy",
+            token: "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",
+            messagesFile: "messages.json",
+            scoresFile: "scores.json"
         };
-        // ----------------------------------------------------------------
 
+        // COMPTE À REBOURS
         const targetDate = new Date("November 10, 2026 16:00:00").getTime();
-
         function updateCountdown() {
             const now = new Date().getTime();
             const difference = targetDate - now;
@@ -338,155 +412,234 @@
             document.getElementById("minutes").innerText = m < 10 ? "0" + m : m;
             document.getElementById("seconds").innerText = s < 10 ? "0" + s : s;
         }
-
         setInterval(updateCountdown, 1000);
         updateCountdown();
 
-        // --- GESTION DE GITHUB API ---
-        let currentFileSha = null;
+        // BANQUE DE QUESTIONS (3 questions / jour jusqu'au 10 Novembre)
+        const dailyQuestions = {
+            "2026-11-06": [
+                { question: "Quel est l'élément chimique représenté par le symbole 'O' ?", options: ["Or", "Oxygène", "Osmium", "Ozone"], answer: 1 },
+                { question: "Quelle planète est la plus proche du Soleil ?", options: ["Vénus", "Mars", "Mercure", "Jupiter"], answer: 2 },
+                { question: "Quel est le port par défaut du protocole HTTPS ?", options: ["80", "8080", "443", "21"], answer: 2 }
+            ],
+            "2026-11-07": [
+                { question: "En quelle année est sorti le premier iPhone ?", options: ["2005", "2007", "2009", "2010"], answer: 1 },
+                { question: "Quelle est la capitale du Japon ?", options: ["Kyoto", "Osaka", "Tokyo", "Hiroshima"], answer: 2 },
+                { question: "Combien d'octets y a-t-il dans un Kilooctet (Ko) ?", options: ["1000", "1024", "512", "2048"], answer: 1 }
+            ],
+            "2026-11-08": [
+                { question: "Quel inventeur est associé au courant alternatif ?", options: ["Edison", "Tesla", "Bell", "Marconi"], answer: 1 },
+                { question: "Quel est l'océan le plus grand de la Terre ?", options: ["Atlantique", "Indien", "Pacifique", "Arctique"], answer: 2 },
+                { question: "Que signifie l'acronyme 'CPU' en informatique ?", options: ["Central Processing Unit", "Computer Personal Unit", "Control Power Unit", "Core Program Utility"], answer: 0 }
+            ],
+            "2026-11-09": [
+                { question: "Quel monument parisien a été construit pour l'Exposition Universelle de 1889 ?", options: ["L'Arc de Triomphe", "La Tour Eiffel", "Le Louvre", "Le Sacré-Cœur"], answer: 1 },
+                { question: "Quel langage web est utilisé pour la mise en forme du style ?", options: ["HTML", "JavaScript", "CSS", "Python"], answer: 2 },
+                { question: "Combien de côtés possède un hexagone ?", options: ["5", "6", "7", "8"], answer: 1 }
+            ],
+            "2026-11-10": [
+                { question: "Quelle est la boisson rafraîchissante incontournable après un décompte réussi ?", options: ["Limonade", "Une bonne bière fraîche", "Un café", "De l'eau tiède"], answer: 1 },
+                { question: "Quel animal est le symbole du système d'exploitation Linux ?", options: ["Un gnou", "Un manchot (Tux)", "Un serpent", "Un dauphin"], answer: 1 },
+                { question: "Combien de secondes y a-t-il dans une minute ?", options: ["50", "60", "100", "90"], answer: 1 }
+            ]
+        };
 
-        document.addEventListener("DOMContentLoaded", () => {
-            if (GITHUB_CONFIG.owner !== "VOTRE_PSEUDO_GITHUB") {
-                fetchMessagesFromGitHub();
-            } else {
-                document.getElementById("loading-msg").innerText = "⚠️ Configuration GitHub manquante dans le code.";
+        let currentActiveQuestions = [];
+        let currentQuestionIdx = 0;
+        let quizScore = 0;
+        let userPseudo = "";
+
+        function getTodayQuestions() {
+            const todayStr = new Date().toISOString().split('T')[0];
+            let questionsPool = [];
+
+            Object.keys(dailyQuestions).forEach(date => {
+                if (date <= todayStr) {
+                    questionsPool = questionsPool.concat(dailyQuestions[date]);
+                }
+            });
+
+            if (questionsPool.length === 0) {
+                Object.keys(dailyQuestions).forEach(date => {
+                    questionsPool = questionsPool.concat(dailyQuestions[date]);
+                });
             }
-        });
 
-        async function fetchMessagesFromGitHub() {
-            const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}`;
-            try {
-                const response = await fetch(url, {
-                    headers: {
-                        'Authorization': `token ${GITHUB_CONFIG.token}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
+            return questionsPool;
+        }
 
-                const list = document.getElementById("messages-list");
-                list.innerHTML = "";
+        function startQuiz() {
+            const pseudoInput = document.getElementById("quiz-pseudo");
+            if (!pseudoInput.value.trim()) {
+                alert("Veuillez entrer un pseudo pour jouer.");
+                return;
+            }
+            userPseudo = pseudoInput.value.trim();
+            currentActiveQuestions = getTodayQuestions();
+            currentQuestionIdx = 0;
+            quizScore = 0;
 
-                if (response.status === 404) {
-                    // Fichier n'existe pas encore
-                    list.innerHTML = '<div class="msg-item" style="text-align: center; color: var(--text-secondary);">Soyez le premier à laisser un message !</div>';
-                    return;
-                }
+            document.getElementById("quiz-registration").style.display = "none";
+            document.getElementById("quiz-box").style.display = "block";
+            showQuestion();
+        }
 
-                const data = await response.json();
-                currentFileSha = data.sha;
-                
-                // Décoder le contenu Base64 (gestion de l'UTF-8)
-                const contentDecoded = decodeURIComponent(escape(atob(data.content)));
-                const messages = JSON.parse(contentDecoded || "[]");
+        function showQuestion() {
+            const q = currentActiveQuestions[currentQuestionIdx];
+            document.getElementById("quiz-progress-text").innerText = `Question ${currentQuestionIdx + 1} / ${currentActiveQuestions.length}`;
+            document.getElementById("quiz-question-title").innerText = q.question;
+            const optionsContainer = document.getElementById("quiz-options");
+            optionsContainer.innerHTML = "";
 
-                if (messages.length === 0) {
-                    list.innerHTML = '<div class="msg-item" style="text-align: center; color: var(--text-secondary);">Soyez le premier à laisser un message !</div>';
-                    return;
-                }
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement("div");
+                btn.className = "quiz-option";
+                btn.innerText = opt;
+                btn.onclick = () => selectAnswer(index);
+                optionsContainer.appendChild(btn);
+            });
+        }
 
-                messages.reverse().forEach(msg => {
-                    appendMessageToDOM(msg.name, msg.text);
-                });
-            } catch (err) {
-                console.error(err);
-                document.getElementById("messages-list").innerHTML = '<div class="msg-item" style="text-align: center; color: #ef4444;">Erreur lors du chargement des messages.</div>';
+        function selectAnswer(index) {
+            if (index === currentActiveQuestions[currentQuestionIdx].answer) {
+                quizScore += 10;
+            }
+            currentQuestionIdx++;
+            if (currentQuestionIdx < currentActiveQuestions.length) {
+                showQuestion();
+            } else {
+                finishQuiz();
             }
         }
 
-        async function addMessage() {
-            if (GITHUB_CONFIG.owner === "VOTRE_PSEUDO_GITHUB") {
-                alert("Veuillez configurer vos identifiants GitHub dans le fichier index.html.");
-                return;
-            }
+        async function finishQuiz() {
+            document.getElementById("quiz-box").style.display = "none";
+            const resultBox = document.getElementById("quiz-result");
+            resultBox.style.display = "block";
+            document.getElementById("quiz-final-score").innerText = `Bravo ${userPseudo} ! Score du jour : ${quizScore} points 🎯`;
+            saveScoreToGitHub(userPseudo, quizScore);
+        }
 
+        // GESTION SCORES GITHUB
+        async function fetchScores() {
+            const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.scoresFile}`;
+            try {
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Accept': 'application/vnd.github.v3+json' }
+                });
+                const tbody = document.getElementById("scoreboard-body");
+                tbody.innerHTML = "";
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const content = decodeURIComponent(escape(atob(data.content)));
+                    const scores = JSON.parse(content || "[]");
+                    
+                    const aggregated = {};
+                    scores.forEach(s => {
+                        if (!aggregated[s.pseudo] || aggregated[s.pseudo] < s.score) {
+                            aggregated[s.pseudo] = s.score;
+                        }
+                    });
+
+                    const sorted = Object.keys(aggregated).map(k => ({ pseudo: k, score: aggregated[k] }));
+                    sorted.sort((a, b) => b.score - a.score);
+
+                    sorted.forEach((s, i) => {
+                        const tr = document.createElement("tr");
+                        const badge = i === 0 ? "🥇 " : i === 1 ? "🥈 " : i === 2 ? "🥉 " : "";
+                        tr.innerHTML = `<td>${badge}#${i+1}</td><td>${escapeHtml(s.pseudo)}</td><td><strong>${s.score} pts</strong></td>`;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Aucun score pour l'instant. Soyez le premier !</td></tr>';
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        async function saveScoreToGitHub(pseudo, userScore) {
+            const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.scoresFile}`;
+            try {
+                let scores = [];
+                let sha = null;
+                const res = await fetch(url, { headers: { 'Authorization': `token ${GITHUB_CONFIG.token}` } });
+                if (res.ok) {
+                    const data = await res.json();
+                    sha = data.sha;
+                    scores = JSON.parse(decodeURIComponent(escape(atob(data.content))) || "[]");
+                }
+                scores.push({ pseudo: pseudo, score: userScore, date: new Date().toISOString() });
+                const updatedContent = btoa(unescape(encodeURIComponent(JSON.stringify(scores, null, 2))));
+
+                await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: `Score de ${pseudo}`, content: updatedContent, sha: sha })
+                });
+                fetchScores();
+            } catch (err) { console.error(err); }
+        }
+
+        // MESSAGES & INIT
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchMessagesFromGitHub();
+            fetchScores();
+        });
+
+        async function fetchMessagesFromGitHub() {
+            const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.messagesFile}`;
+            try {
+                const response = await fetch(url, { headers: { 'Authorization': `token ${GITHUB_CONFIG.token}` } });
+                const list = document.getElementById("messages-list");
+                list.innerHTML = "";
+                if (response.ok) {
+                    const data = await response.json();
+                    const messages = JSON.parse(decodeURIComponent(escape(atob(data.content))) || "[]");
+                    messages.reverse().forEach(msg => appendMessageToDOM(msg.name, msg.text));
+                } else {
+                    list.innerHTML = '<div class="msg-item" style="text-align: center;">Soyez le premier à laisser un message !</div>';
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        async function addMessage() {
             const nameInput = document.getElementById("name-input");
             const msgInput = document.getElementById("msg-input");
-            const btnSend = document.getElementById("btn-send");
-            const statusNotice = document.getElementById("status-notice");
-
             const name = nameInput.value.trim() || "Anonyme";
             const text = msgInput.value.trim();
-
             if (!text) return;
 
-            btnSend.disabled = true;
-            btnSend.innerText = "Enregistrement...";
-            statusNotice.style.display = "block";
-            statusNotice.innerText = "Publication sur GitHub en cours...";
-
-            try {
-                // 1. Récupérer les messages existants et le SHA le plus récent
-                const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}`;
-                let messages = [];
-                let sha = currentFileSha;
-
-                const getRes = await fetch(url, {
-                    headers: {
-                        'Authorization': `token ${GITHUB_CONFIG.token}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-
-                if (getRes.ok) {
-                    const data = await getRes.json();
-                    sha = data.sha;
-                    const contentDecoded = decodeURIComponent(escape(atob(data.content)));
-                    messages = JSON.parse(contentDecoded || "[]");
-                }
-
-                // 2. Ajouter le nouveau message
-                messages.push({ name: name, text: text, date: new Date().toISOString() });
-
-                // 3. Ré-encoder en Base64 UTF-8
-                const updatedContent = btoa(unescape(encodeURIComponent(JSON.stringify(messages, null, 2))));
-
-                // 4. Enregistrer sur GitHub via PUT
-                const putRes = await fetch(url, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `token ${GITHUB_CONFIG.token}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        message: `Nouveau mot doux de ${name}`,
-                        content: updatedContent,
-                        sha: sha
-                    })
-                });
-
-                if (putRes.ok) {
-                    msgInput.value = "";
-                    statusNotice.innerText = "Message enregistré avec succès sur GitHub !";
-                    setTimeout(() => { statusNotice.style.display = "none"; }, 3000);
-                    // Recharger la liste
-                    fetchMessagesFromGitHub();
-                } else {
-                    const errData = await putRes.json();
-                    alert("Erreur GitHub: " + (errData.message || "Impossible de sauvegarder."));
-                }
-            } catch (err) {
-                console.error(err);
-                alert("Erreur de connexion lors de la sauvegarde.");
-            } finally {
-                btnSend.disabled = false;
-                btnSend.innerText = "Envoyer";
+            const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.messagesFile}`;
+            let messages = [];
+            let sha = null;
+            const res = await fetch(url, { headers: { 'Authorization': `token ${GITHUB_CONFIG.token}` } });
+            if (res.ok) {
+                const data = await res.json();
+                sha = data.sha;
+                messages = JSON.parse(decodeURIComponent(escape(atob(data.content))) || "[]");
             }
+            messages.push({ name: name, text: text, date: new Date().toISOString() });
+            const updatedContent = btoa(unescape(encodeURIComponent(JSON.stringify(messages, null, 2))));
+
+            await fetch(url, {
+                method: 'PUT',
+                headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: `Message de ${name}`, content: updatedContent, sha: sha })
+            });
+            msgInput.value = "";
+            fetchMessagesFromGitHub();
         }
 
         function appendMessageToDOM(name, text) {
             const list = document.getElementById("messages-list");
             const item = document.createElement("div");
             item.className = "msg-item";
-            
-            const safeName = name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            const safeText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            
-            item.innerHTML = `
-                <div class="msg-header">${safeName}</div>
-                <div class="msg-content">💬 ${safeText}</div>
-            `;
+            item.innerHTML = `<div class="msg-header">${escapeHtml(name)}</div><div>💬 ${escapeHtml(text)}</div>`;
             list.appendChild(item);
+        }
+
+        function escapeHtml(unsafe) {
+            return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
         function toggleTheme() {
@@ -506,10 +659,8 @@
             const ctx = canvas.getContext('2d');
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-
             const particles = [];
             const colors = ['#6366f1', '#a855f7', '#ec4899', '#3b82f6', '#10b981', '#f59e0b'];
-
             for (let i = 0; i < 150; i++) {
                 particles.push({
                     x: Math.random() * canvas.width,
@@ -520,7 +671,6 @@
                     vx: Math.random() * 2 - 1
                 });
             }
-
             function render() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 particles.forEach(p => {
