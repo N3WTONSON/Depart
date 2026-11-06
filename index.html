@@ -363,7 +363,8 @@
         <!-- SECTION MUR DE MOTS DOUX -->
         <div class="section-card">
             <h2>💬 Laissez un mot doux à Jimmy</h2>
-            <p class="desc">Enregistré directement sur le dépôt GitHub.</p>
+            <p class="desc">Les messages sont synchronisés entre tous les appareils via GitHub.</p>
+            <div id="sync-status" style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.8rem;">🔄 Synchronisation...</div>
             
             <div class="input-group">
                 <input type="text" id="name-input" placeholder="Votre prénom" style="flex: 0.3;">
@@ -384,9 +385,6 @@
             messagesFile: "messages.json",
             scoresFile: "scores.json"
         };
-
-        // URL directes via RAW / GitHub Pages avec fallback localStorage
-        const BASE_RAW_URL = `https://raw.githubusercontent.com/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/main/`;
 
         // COMPTE À REBOURS
         const targetDate = new Date("2026-11-10T16:00:00+01:00").getTime();
@@ -517,24 +515,85 @@
             saveScoreToGitHub(userPseudo, quizScore);
         }
 
-        // CHARGEMENT ROBUSTE (RAW + LocalStorage)
+        // ========== PERSISTENCE GITHUB (multi-appareils) ==========
+        // Utilise l'API Contents de GitHub (moins de cache que raw) + localStorage en secours
+        // + polling pour que les messages apparaissent sur tous les appareils
+
+        function setSyncStatus(text, isError = false) {
+            const el = document.getElementById("sync-status");
+            if (el) {
+                el.innerText = text;
+                el.style.color = isError ? "#ef4444" : "var(--text-secondary)";
+            }
+        }
+
+        async function githubGetFile(filename) {
+            const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${filename}`;
+            const res = await fetch(url, {
+                headers: {
+                    'Authorization': `token ${GITHUB_CONFIG.token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                },
+                cache: 'no-store'
+            });
+            if (!res.ok) {
+                if (res.status === 404) throw new Error("Fichier ou dépôt introuvable (404). Créez le dépôt GitHub.");
+                throw new Error(`GitHub HTTP ${res.status}`);
+            }
+            const data = await res.json();
+            const cleaned = (data.content || "").replace(/\s/g, "");
+            let arr = [];
+            try {
+                const decoded = decodeURIComponent(escape(atob(cleaned)));
+                arr = decoded ? JSON.parse(decoded) : [];
+                if (!Array.isArray(arr)) arr = [];
+            } catch (e) { arr = []; }
+            return { arr, sha: data.sha };
+        }
+
+        async function githubPutFile(filename, arr, sha, message) {
+            const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${filename}`;
+            const body = {
+                message: message,
+                content: btoa(unescape(encodeURIComponent(JSON.stringify(arr, null, 2)))),
+                sha: sha
+            };
+            const res = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${GITHUB_CONFIG.token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/vnd.github.v3+json'
+                },
+                body: JSON.stringify(body)
+            });
+            if (res.status === 409) {
+                // Conflit de SHA → on réessaie une fois avec le nouveau SHA
+                const fresh = await githubGetFile(filename);
+                return githubPutFile(filename, arr, fresh.sha, message);
+            }
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(`Écriture GitHub échouée (${res.status}): ${errText.slice(0, 120)}`);
+            }
+            return true;
+        }
+
         async function fetchFileContent(filename) {
             try {
-                const res = await fetch(BASE_RAW_URL + filename + "?t=" + Date.now());
-                if (res.ok) {
-                    const data = await res.json();
-                    const arr = Array.isArray(data) ? data : [];
-                    // Met à jour le backup local avec les données fraîches de GitHub
-                    localStorage.setItem("backup_" + filename, JSON.stringify(arr));
-                    return arr;
-                }
-            } catch (e) {}
-            // Fallback localStorage si GitHub inaccessible
-            const local = localStorage.getItem("backup_" + filename);
-            try {
-                return local ? JSON.parse(local) : [];
+                const { arr } = await githubGetFile(filename);
+                localStorage.setItem("backup_" + filename, JSON.stringify(arr));
+                setSyncStatus("✅ Synchronisé avec GitHub");
+                return arr;
             } catch (e) {
-                return [];
+                console.warn("GitHub inaccessible, fallback localStorage:", e.message);
+                setSyncStatus("⚠️ Mode local (GitHub inaccessible) — " + e.message, true);
+                const local = localStorage.getItem("backup_" + filename);
+                try {
+                    return local ? JSON.parse(local) : [];
+                } catch (err) {
+                    return [];
+                }
             }
         }
 
@@ -570,39 +629,32 @@
 
         async function saveScoreToGitHub(pseudo, userScore) {
             try {
-                // Sauvegarde locale immédiate
-                const existing = await fetchFileContent(GITHUB_CONFIG.scoresFile);
+                // Optimistic local
+                let existing = [];
+                try {
+                    const local = localStorage.getItem("backup_" + GITHUB_CONFIG.scoresFile);
+                    existing = local ? JSON.parse(local) : [];
+                } catch (e) {}
                 existing.push({ pseudo: pseudo, score: userScore, date: new Date().toISOString() });
                 localStorage.setItem("backup_" + GITHUB_CONFIG.scoresFile, JSON.stringify(existing));
 
-                // Tentative GitHub API
-                const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.scoresFile}`;
-                const res = await fetch(url, { headers: { 'Authorization': `token ${GITHUB_CONFIG.token}` } });
-                if (res.ok) {
-                    const data = await res.json();
-                    const cleanedBase64 = data.content.replace(/\s/g, '');
-                    let scores = [];
-                    try {
-                        const decoded = decodeURIComponent(escape(atob(cleanedBase64)));
-                        scores = decoded ? JSON.parse(decoded) : [];
-                        if (!Array.isArray(scores)) scores = [];
-                    } catch (e) { scores = []; }
-                    scores.push({ pseudo: pseudo, score: userScore, date: new Date().toISOString() });
-                    const updatedContent = btoa(unescape(encodeURIComponent(JSON.stringify(scores, null, 2))));
-
-                    await fetch(url, {
-                        method: 'PUT',
-                        headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: `Score de ${pseudo}`, content: updatedContent, sha: data.sha })
-                    });
-                }
-                setTimeout(fetchScores, 1500);
-            } catch (err) { console.error("Sauvegarde score:", err); }
+                // GitHub
+                const { arr, sha } = await githubGetFile(GITHUB_CONFIG.scoresFile);
+                arr.push({ pseudo: pseudo, score: userScore, date: new Date().toISOString() });
+                await githubPutFile(GITHUB_CONFIG.scoresFile, arr, sha, `Score de ${pseudo}`);
+                localStorage.setItem("backup_" + GITHUB_CONFIG.scoresFile, JSON.stringify(arr));
+                setTimeout(fetchScores, 800);
+            } catch (err) {
+                console.error("Sauvegarde score:", err);
+                setSyncStatus("⚠️ Score sauvegardé localement uniquement", true);
+            }
         }
 
         async function fetchMessagesFromGitHub() {
             const list = document.getElementById("messages-list");
             const messages = await fetchFileContent(GITHUB_CONFIG.messagesFile);
+
+            // On ne vide pas complètement si on a déjà des messages optimistes récents
             list.innerHTML = "";
 
             if (!messages || messages.length === 0) {
@@ -629,39 +681,31 @@
             btnSend.disabled = true;
             btnSend.innerText = "Envoi...";
 
+            // 1. Affichage immédiat (optimistic UI) — visible tout de suite sur cet appareil
+            const loadingMsg = document.getElementById("loading-msg");
+            if (loadingMsg) loadingMsg.remove();
+            appendMessageToDOM(name, text);
+            msgInput.value = "";
+
             try {
-                // Sauvegarde locale immédiate
-                const existing = await fetchFileContent(GITHUB_CONFIG.messagesFile);
+                // 2. Sauvegarde locale
+                let existing = [];
+                try {
+                    const local = localStorage.getItem("backup_" + GITHUB_CONFIG.messagesFile);
+                    existing = local ? JSON.parse(local) : [];
+                } catch (e) {}
                 existing.push({ name: name, text: text, date: new Date().toISOString() });
                 localStorage.setItem("backup_" + GITHUB_CONFIG.messagesFile, JSON.stringify(existing));
 
-                // Tentative GitHub API
-                const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.messagesFile}`;
-                const res = await fetch(url, { headers: { 'Authorization': `token ${GITHUB_CONFIG.token}` } });
-                if (res.ok) {
-                    const data = await res.json();
-                    const cleanedBase64 = data.content.replace(/\s/g, '');
-                    let messages = [];
-                    try {
-                        const decoded = decodeURIComponent(escape(atob(cleanedBase64)));
-                        messages = decoded ? JSON.parse(decoded) : [];
-                        if (!Array.isArray(messages)) messages = [];
-                    } catch (e) { messages = []; }
-                    messages.push({ name: name, text: text, date: new Date().toISOString() });
-                    const updatedContent = btoa(unescape(encodeURIComponent(JSON.stringify(messages, null, 2))));
-
-                    await fetch(url, {
-                        method: 'PUT',
-                        headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: `Message de ${name}`, content: updatedContent, sha: data.sha })
-                    });
-                }
-
-                msgInput.value = "";
-                setTimeout(fetchMessagesFromGitHub, 1500);
+                // 3. Écriture GitHub (partagée entre tous les appareils)
+                const { arr, sha } = await githubGetFile(GITHUB_CONFIG.messagesFile);
+                arr.push({ name: name, text: text, date: new Date().toISOString() });
+                await githubPutFile(GITHUB_CONFIG.messagesFile, arr, sha, `Message de ${name}`);
+                localStorage.setItem("backup_" + GITHUB_CONFIG.messagesFile, JSON.stringify(arr));
+                setSyncStatus("✅ Message synchronisé sur tous les appareils");
             } catch (err) {
                 console.error("Ajout message:", err);
-                alert("Erreur lors de l'envoi.");
+                setSyncStatus("⚠️ Message visible ici seulement (GitHub inaccessible) — " + err.message, true);
             } finally {
                 btnSend.disabled = false;
                 btnSend.innerText = "Envoyer";
@@ -670,10 +714,15 @@
 
         function appendMessageToDOM(name, text) {
             const list = document.getElementById("messages-list");
+            // Évite les doublons visuels si on poll juste après un envoi
+            const existing = list.querySelectorAll(".msg-item");
+            for (const el of existing) {
+                if (el.innerText.includes(name) && el.innerText.includes(text)) return;
+            }
             const item = document.createElement("div");
             item.className = "msg-item";
             item.innerHTML = `<div class="msg-header">${escapeHtml(name)}</div><div>💬 ${escapeHtml(text)}</div>`;
-            list.appendChild(item);
+            list.insertBefore(item, list.firstChild); // plus récents en haut
         }
 
         function escapeHtml(unsafe) {
@@ -731,6 +780,13 @@
         document.addEventListener("DOMContentLoaded", () => {
             fetchMessagesFromGitHub();
             fetchScores();
+
+            // Rafraîchissement automatique toutes les 20 secondes
+            // → les messages postés sur un autre appareil apparaissent ici
+            setInterval(() => {
+                fetchMessagesFromGitHub();
+                fetchScores();
+            }, 20000);
         });
     </script>
 </body>
