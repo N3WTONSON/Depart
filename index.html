@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compte à rebours - Départ de Jimmy</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --card-border: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-glow: #8b5cf6;
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --card-border: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --accent-glow: #6366f1;
+            --accent-gradient: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        canvas#confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-primary);
+            padding: 0.6rem 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+            z-index: 1;
+        }
+
+        .header {
+            margin-bottom: 2.5rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.4rem 1.2rem;
+            background: var(--accent-gradient);
+            color: white;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 0.8rem;
+            line-height: 1.2;
+        }
+
+        p.subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+        }
+
+        .countdown-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.2rem;
+            margin-bottom: 3rem;
+        }
+
+        .time-box {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 1.8rem 1rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .time-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--accent-gradient);
+        }
+
+        .number {
+            font-size: 3.2rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+            color: var(--accent-glow);
+        }
+
+        .label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .wall-section {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 2rem;
+            text-align: left;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .wall-section h2 {
+            font-size: 1.4rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .wall-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        input {
+            flex: 1;
+            padding: 0.9rem 1.2rem;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-size: 1rem;
+            outline: none;
+        }
+
+        input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        button.btn-send {
+            padding: 0.9rem 1.8rem;
+            border-radius: 12px;
+            border: none;
+            background: var(--accent-gradient);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .status-notice {
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            color: #a855f7;
+            display: none;
+        }
+
+        .messages-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .msg-item {
+            background-color: var(--bg-color);
+            border: 1px solid var(--card-border);
+            padding: 1rem 1.2rem;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        .msg-header {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--accent-glow);
+            margin-bottom: 4px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 650px) {
+            .countdown-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            h1 { font-size: 2rem; }
+            .number { font-size: 2.5rem; }
+            .input-group { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <button class="theme-toggle" onclick="toggleTheme()">
+        <span id="theme-icon">🌙</span> Mode
+    </button>
+
+    <div class="container">
+        <div class="header">
+            <span class="badge">Compte à Rebours Officiel</span>
+            <h1 id="title">Le Décompte de Jimmy ! 🚀</h1>
+            <p class="subtitle">Départ prévu le 10 Novembre à 16h00</p>
+        </div>
+
+        <div class="countdown-grid">
+            <div class="time-box">
+                <div class="number" id="days">00</div>
+                <div class="label">Jours</div>
+            </div>
+            <div class="time-box">
+                <div class="number" id="hours">00</div>
+                <div class="label">Heures</div>
+            </div>
+            <div class="time-box">
+                <div class="number" id="minutes">00</div>
+                <div class="label">Minutes</div>
+            </div>
+            <div class="time-box">
+                <div class="number" id="seconds">00</div>
+                <div class="label">Secondes</div>
+            </div>
+        </div>
+
+        <div class="wall-section">
+            <h2>💬 Laissez un mot doux à Jimmy</h2>
+            <p class="wall-desc">Les messages sont enregistrés directement sur le dépôt GitHub.</p>
+            
+            <div class="input-group">
+                <input type="text" id="name-input" placeholder="Votre prénom" style="flex: 0.3;">
+                <input type="text" id="msg-input" placeholder="Votre message..." onkeypress="if(event.key==='Enter') addMessage()">
+                <button class="btn-send" id="btn-send" onclick="addMessage()">Envoyer</button>
+            </div>
+            <div id="status-notice" class="status-notice"></div>
+            <div class="messages-list" id="messages-list">
+                <div class="msg-item" id="loading-msg" style="text-align: center; color: var(--text-secondary);">Chargement des messages depuis GitHub...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ----------------------------------------------------------------
+        // ⚙️ CONFIGURATION GITHUB API
+        // ----------------------------------------------------------------
+        // REMPLACEZ CES VALEURS APRES AVOIR CRÉÉ LE REPO ET LE TOKEN
+        const GITHUB_CONFIG = {
+            owner: "VOTRE_PSEUDO_GITHUB",
+            repo: "VOTRE_NOM_DE_REPO",
+            token: "VOTRE_GITHUB_TOKEN_PAT", // GitHub Personal Access Token (scope: repo ou contents)
+            filePath: "messages.json"
+        };
+        // ----------------------------------------------------------------
+
+        const targetDate = new Date("November 10, 2026 16:00:00").getTime();
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const difference = targetDate - now;
+
+            if (difference <= 0) {
+                document.getElementById("days").innerText = "00";
+                document.getElementById("hours").innerText = "00";
+                document.getElementById("minutes").innerText = "00";
+                document.getElementById("seconds").innerText = "00";
+                document.getElementById("title").innerText = "C'est l'heure du départ ! 🥳";
+                startConfetti();
+                return;
+            }
+
+            const d = Math.floor(difference / (1000 * 60 * 60 * 24));
+            const h = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((difference % (1000 * 60)) / 1000);
+
+            document.getElementById("days").innerText = d < 10 ? "0" + d : d;
+            document.getElementById("hours").innerText = h < 10 ? "0" + h : h;
+            document.getElementById("minutes").innerText = m < 10 ? "0" + m : m;
+            document.getElementById("seconds").innerText = s < 10 ? "0" + s : s;
+        }
+
+        setInterval(updateCountdown, 1000);
+        updateCountdown();
+
+        // --- GESTION DE GITHUB API ---
+        let currentFileSha = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if (GITHUB_CONFIG.owner !== "VOTRE_PSEUDO_GITHUB") {
+                fetchMessagesFromGitHub();
+            } else {
+                document.getElementById("loading-msg").innerText = "⚠️ Configuration GitHub manquante dans le code.";
+            }
+        });
+
+        async function fetchMessagesFromGitHub() {
+            const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}`;
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                const list = document.getElementById("messages-list");
+                list.innerHTML = "";
+
+                if (response.status === 404) {
+                    // Fichier n'existe pas encore
+                    list.innerHTML = '<div class="msg-item" style="text-align: center; color: var(--text-secondary);">Soyez le premier à laisser un message !</div>';
+                    return;
+                }
+
+                const data = await response.json();
+                currentFileSha = data.sha;
+                
+                // Décoder le contenu Base64 (gestion de l'UTF-8)
+                const contentDecoded = decodeURIComponent(escape(atob(data.content)));
+                const messages = JSON.parse(contentDecoded || "[]");
+
+                if (messages.length === 0) {
+                    list.innerHTML = '<div class="msg-item" style="text-align: center; color: var(--text-secondary);">Soyez le premier à laisser un message !</div>';
+                    return;
+                }
+
+                messages.reverse().forEach(msg => {
+                    appendMessageToDOM(msg.name, msg.text);
+                });
+            } catch (err) {
+                console.error(err);
+                document.getElementById("messages-list").innerHTML = '<div class="msg-item" style="text-align: center; color: #ef4444;">Erreur lors du chargement des messages.</div>';
+            }
+        }
+
+        async function addMessage() {
+            if (GITHUB_CONFIG.owner === "VOTRE_PSEUDO_GITHUB") {
+                alert("Veuillez configurer vos identifiants GitHub dans le fichier index.html.");
+                return;
+            }
+
+            const nameInput = document.getElementById("name-input");
+            const msgInput = document.getElementById("msg-input");
+            const btnSend = document.getElementById("btn-send");
+            const statusNotice = document.getElementById("status-notice");
+
+            const name = nameInput.value.trim() || "Anonyme";
+            const text = msgInput.value.trim();
+
+            if (!text) return;
+
+            btnSend.disabled = true;
+            btnSend.innerText = "Enregistrement...";
+            statusNotice.style.display = "block";
+            statusNotice.innerText = "Publication sur GitHub en cours...";
+
+            try {
+                // 1. Récupérer les messages existants et le SHA le plus récent
+                const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}`;
+                let messages = [];
+                let sha = currentFileSha;
+
+                const getRes = await fetch(url, {
+                    headers: {
+                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (getRes.ok) {
+                    const data = await getRes.json();
+                    sha = data.sha;
+                    const contentDecoded = decodeURIComponent(escape(atob(data.content)));
+                    messages = JSON.parse(contentDecoded || "[]");
+                }
+
+                // 2. Ajouter le nouveau message
+                messages.push({ name: name, text: text, date: new Date().toISOString() });
+
+                // 3. Ré-encoder en Base64 UTF-8
+                const updatedContent = btoa(unescape(encodeURIComponent(JSON.stringify(messages, null, 2))));
+
+                // 4. Enregistrer sur GitHub via PUT
+                const putRes = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `Nouveau mot doux de ${name}`,
+                        content: updatedContent,
+                        sha: sha
+                    })
+                });
+
+                if (putRes.ok) {
+                    msgInput.value = "";
+                    statusNotice.innerText = "Message enregistré avec succès sur GitHub !";
+                    setTimeout(() => { statusNotice.style.display = "none"; }, 3000);
+                    // Recharger la liste
+                    fetchMessagesFromGitHub();
+                } else {
+                    const errData = await putRes.json();
+                    alert("Erreur GitHub: " + (errData.message || "Impossible de sauvegarder."));
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Erreur de connexion lors de la sauvegarde.");
+            } finally {
+                btnSend.disabled = false;
+                btnSend.innerText = "Envoyer";
+            }
+        }
+
+        function appendMessageToDOM(name, text) {
+            const list = document.getElementById("messages-list");
+            const item = document.createElement("div");
+            item.className = "msg-item";
+            
+            const safeName = name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const safeText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            
+            item.innerHTML = `
+                <div class="msg-header">${safeName}</div>
+                <div class="msg-content">💬 ${safeText}</div>
+            `;
+            list.appendChild(item);
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.getElementById("theme-icon");
+            if (body.getAttribute("data-theme") === "light") {
+                body.removeAttribute("data-theme");
+                icon.innerText = "🌙";
+            } else {
+                body.setAttribute("data-theme", "light");
+                icon.innerText = "☀️";
+            }
+        }
+
+        function startConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const colors = ['#6366f1', '#a855f7', '#ec4899', '#3b82f6', '#10b981', '#f59e0b'];
+
+            for (let i = 0; i < 150; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    size: Math.random() * 8 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    vy: Math.random() * 3 + 2,
+                    vx: Math.random() * 2 - 1
+                });
+            }
+
+            function render() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    p.y += p.vy;
+                    p.x += p.vx;
+                    if (p.y > canvas.height) p.y = -10;
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(p.x, p.y, p.size, p.size);
+                });
+                requestAnimationFrame(render);
+            }
+            render();
+        }
+    </script>
+</body>
+</html>
