@@ -127,18 +127,10 @@
     </div>
 
     <script>
-        // ========== CONFIG JSTASH (fonctionne vraiment en multi-appareils) ==========
+        // ========== CONFIG EXTENDSCLASS (CORS OK + écriture gratuite) ==========
         const STORAGE = {
-            messages: {
-                id: "8THv5PIix2AcjsnIU4sW9A",
-                token: "js_edit_UEueYFl5NCK3BQ7NuGV3KBUkERj9IEkiYritMlu6Dus",
-                readUrl: "https://j.jstash.app/8THv5PIix2AcjsnIU4sW9A"
-            },
-            scores: {
-                id: "mM1Sss1bwo5RGdnhtzYVoQ",
-                token: "js_edit_0KZhbT-RYz_G5HUqteIXD43UDKn7dNgzl2PIuvBMSPc",
-                readUrl: "https://j.jstash.app/mM1Sss1bwo5RGdnhtzYVoQ"
-            }
+            messages: "https://extendsclass.com/api/json-storage/bin/daacdaf",
+            scores:   "https://extendsclass.com/api/json-storage/bin/bbdefda"
         };
 
         // ========== COMPTE À REBOURS ==========
@@ -247,32 +239,27 @@
             }
         }
 
-        async function loadData(cfg) {
+        async function loadData(url) {
             try {
-                const res = await fetch(cfg.readUrl + "?t=" + Date.now(), { cache: "no-store" });
+                const res = await fetch(url + "?t=" + Date.now(), { cache: "no-store" });
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 const data = await res.json();
-                // jstash returns { content: [...] }
-                const arr = Array.isArray(data) ? data : (data.content || []);
-                return Array.isArray(arr) ? arr : [];
+                return Array.isArray(data) ? data : [];
             } catch (e) {
                 console.warn(e);
-                const key = "backup_" + cfg.id;
+                const key = "backup_" + url.split("/").pop();
                 try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; }
             }
         }
 
-        async function saveData(cfg, arr) {
-            const res = await fetch(`https://api.jstash.app/v1/bins/${cfg.id}`, {
+        async function saveData(url, arr) {
+            const res = await fetch(url, {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer " + cfg.token
-                },
-                body: JSON.stringify({ content: arr })
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(arr)
             });
             if (!res.ok) throw new Error("Écriture échouée " + res.status);
-            localStorage.setItem("backup_" + cfg.id, JSON.stringify(arr));
+            localStorage.setItem("backup_" + url.split("/").pop(), JSON.stringify(arr));
         }
 
         async function fetchMessages() {
