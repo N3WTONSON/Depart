@@ -170,7 +170,7 @@
         .desc {
             font-size: 0.9rem;
             color: var(--text-secondary);
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
 
         .input-group {
@@ -287,6 +287,7 @@
         #sync-status {
             font-size: 0.8rem;
             margin-bottom: 0.8rem;
+            color: var(--text-secondary);
         }
 
         @media (max-width: 650px) {
@@ -352,7 +353,7 @@
 
             <div id="quiz-result" style="display: none; text-align: center;">
                 <h3 id="quiz-final-score"></h3>
-                <p class="desc" style="margin-top: 0.5rem;">Votre score global a été mis à jour dans le classement !</p>
+                <p class="desc" style="margin-top: 0.5rem;">Votre score a été mis à jour dans le classement !</p>
             </div>
 
             <h3 style="margin-top: 2rem; font-size: 1.1rem;">🥇 Tableau des Scores</h3>
@@ -373,7 +374,7 @@
         <!-- SECTION MUR DE MOTS DOUX -->
         <div class="section-card">
             <h2>💬 Laissez un mot doux à Jimmy</h2>
-            <p class="desc">Les messages sont synchronisés entre tous les appareils via GitHub.</p>
+            <p class="desc">Les messages sont synchronisés entre tous les appareils.</p>
             <div id="sync-status">🔄 Synchronisation...</div>
             
             <div class="input-group">
@@ -388,13 +389,10 @@
     </div>
 
     <script>
-        // ========== CONFIG ==========
-        const GITHUB_CONFIG = {
-            owner: "jimmyruti",
-            repo: "depart-jimmy",
-            token: "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",
-            messagesFile: "messages.json",
-            scoresFile: "scores.json"
+        // ========== CONFIG NPOINT ==========
+        const STORAGE = {
+            messages: "https://api.npoint.io/1710122eb5865f36163b",
+            scores:   "https://api.npoint.io/b6d0c0cea684fb461a5e"
         };
 
         // ========== COMPTE À REBOURS ==========
@@ -463,12 +461,8 @@
         let userPseudo = "";
 
         function getTodayQuestions() {
-            const now = new Date();
-            const todayStr = now.toLocaleDateString('en-CA'); // YYYY-MM-DD en local
-            if (dailyQuestions[todayStr]) {
-                return dailyQuestions[todayStr];
-            }
-            // Fallback : dernier jour disponible
+            const todayStr = new Date().toLocaleDateString('en-CA');
+            if (dailyQuestions[todayStr]) return dailyQuestions[todayStr];
             const dates = Object.keys(dailyQuestions).sort();
             return dailyQuestions[dates[dates.length - 1]] || [];
         }
@@ -520,13 +514,12 @@
 
         async function finishQuiz() {
             document.getElementById("quiz-box").style.display = "none";
-            const resultBox = document.getElementById("quiz-result");
-            resultBox.style.display = "block";
+            document.getElementById("quiz-result").style.display = "block";
             document.getElementById("quiz-final-score").innerText = `Bravo ${userPseudo} ! Score : ${quizScore} points 🎯`;
-            saveScoreToGitHub(userPseudo, quizScore);
+            saveScore(userPseudo, quizScore);
         }
 
-        // ========== PERSISTENCE GITHUB ==========
+        // ========== STOCKAGE NPOINT (multi-appareils) ==========
         function setSyncStatus(text, isError = false) {
             const el = document.getElementById("sync-status");
             if (el) {
@@ -535,72 +528,18 @@
             }
         }
 
-        async function githubGetFile(filename) {
-            const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${filename}`;
-            const res = await fetch(url, {
-                headers: {
-                    'Authorization': `token ${GITHUB_CONFIG.token}`,
-                    'Accept': 'application/vnd.github.v3+json'
-                },
-                cache: 'no-store'
-            });
-            if (!res.ok) {
-                if (res.status === 401) throw new Error("Token invalide ou expiré (401). Génère un nouveau token.");
-                if (res.status === 404) throw new Error("Dépôt ou fichier introuvable (404). Crée le dépôt + messages.json et scores.json.");
-                throw new Error(`GitHub HTTP ${res.status}`);
-            }
-            const data = await res.json();
-            const cleaned = (data.content || "").replace(/\s/g, "");
-            let arr = [];
+        async function loadData(url) {
             try {
-                const decoded = decodeURIComponent(escape(atob(cleaned)));
-                arr = decoded ? JSON.parse(decoded) : [];
-                if (!Array.isArray(arr)) arr = [];
+                const res = await fetch(url + "?t=" + Date.now(), { cache: "no-store" });
+                if (!res.ok) throw new Error("HTTP " + res.status);
+                const data = await res.json();
+                return Array.isArray(data) ? data : [];
             } catch (e) {
-                arr = [];
-            }
-            return { arr, sha: data.sha };
-        }
-
-        async function githubPutFile(filename, arr, sha, message) {
-            const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${filename}`;
-            const body = {
-                message: message,
-                content: btoa(unescape(encodeURIComponent(JSON.stringify(arr, null, 2)))),
-                sha: sha
-            };
-            const res = await fetch(url, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `token ${GITHUB_CONFIG.token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/vnd.github.v3+json'
-                },
-                body: JSON.stringify(body)
-            });
-            if (res.status === 409) {
-                // Conflit → on récupère le nouveau SHA et on réessaie une fois
-                const fresh = await githubGetFile(filename);
-                return githubPutFile(filename, arr, fresh.sha, message);
-            }
-            if (!res.ok) {
-                const errText = await res.text();
-                throw new Error(`Écriture échouée (${res.status})`);
-            }
-            return true;
-        }
-
-        async function fetchFileContent(filename) {
-            try {
-                const { arr } = await githubGetFile(filename);
-                localStorage.setItem("backup_" + filename, JSON.stringify(arr));
-                setSyncStatus("✅ Synchronisé avec GitHub");
-                return arr;
-            } catch (e) {
-                console.warn("GitHub inaccessible:", e.message);
-                setSyncStatus("⚠️ " + e.message, true);
-                const local = localStorage.getItem("backup_" + filename);
+                console.warn("Erreur chargement:", e);
+                // Fallback localStorage
+                const key = "backup_" + url.split("/").pop();
                 try {
+                    const local = localStorage.getItem(key);
                     return local ? JSON.parse(local) : [];
                 } catch (err) {
                     return [];
@@ -608,9 +547,42 @@
             }
         }
 
+        async function saveData(url, data) {
+            const res = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+            if (!res.ok) throw new Error("Écriture échouée HTTP " + res.status);
+            // Backup local
+            const key = "backup_" + url.split("/").pop();
+            localStorage.setItem(key, JSON.stringify(data));
+            return true;
+        }
+
+        async function fetchMessages() {
+            const list = document.getElementById("messages-list");
+            const messages = await loadData(STORAGE.messages);
+
+            list.innerHTML = "";
+
+            if (!messages || messages.length === 0) {
+                list.innerHTML = '<div class="msg-item" style="text-align: center; color: var(--text-secondary);">Soyez le premier à laisser un message !</div>';
+                setSyncStatus("✅ Connecté");
+                return;
+            }
+
+            messages.slice().reverse().forEach(msg => {
+                if (msg && msg.name && msg.text) {
+                    appendMessageToDOM(msg.name, msg.text);
+                }
+            });
+            setSyncStatus("✅ Synchronisé");
+        }
+
         async function fetchScores() {
             const tbody = document.getElementById("scoreboard-body");
-            const scores = await fetchFileContent(GITHUB_CONFIG.scoresFile);
+            const scores = await loadData(STORAGE.scores);
             tbody.innerHTML = "";
 
             if (!scores || scores.length === 0) {
@@ -620,7 +592,7 @@
 
             const aggregated = {};
             scores.forEach(s => {
-                if (s && s.pseudo && typeof s.score === 'number') {
+                if (s && s.pseudo && typeof s.score === "number") {
                     if (!aggregated[s.pseudo] || aggregated[s.pseudo] < s.score) {
                         aggregated[s.pseudo] = s.score;
                     }
@@ -635,47 +607,6 @@
                 const badge = i === 0 ? "🥇 " : i === 1 ? "🥈 " : i === 2 ? "🥉 " : "";
                 tr.innerHTML = `<td>${badge}#${i + 1}</td><td>${escapeHtml(s.pseudo)}</td><td><strong>${s.score} pts</strong></td>`;
                 tbody.appendChild(tr);
-            });
-        }
-
-        async function saveScoreToGitHub(pseudo, userScore) {
-            try {
-                // Optimistic local
-                let existing = [];
-                try {
-                    const local = localStorage.getItem("backup_" + GITHUB_CONFIG.scoresFile);
-                    existing = local ? JSON.parse(local) : [];
-                } catch (e) {}
-                existing.push({ pseudo, score: userScore, date: new Date().toISOString() });
-                localStorage.setItem("backup_" + GITHUB_CONFIG.scoresFile, JSON.stringify(existing));
-
-                const { arr, sha } = await githubGetFile(GITHUB_CONFIG.scoresFile);
-                arr.push({ pseudo, score: userScore, date: new Date().toISOString() });
-                await githubPutFile(GITHUB_CONFIG.scoresFile, arr, sha, `Score de ${pseudo}`);
-                localStorage.setItem("backup_" + GITHUB_CONFIG.scoresFile, JSON.stringify(arr));
-                setTimeout(fetchScores, 800);
-            } catch (err) {
-                console.error("Sauvegarde score:", err);
-                setSyncStatus("⚠️ Score sauvegardé localement uniquement", true);
-            }
-        }
-
-        async function fetchMessagesFromGitHub() {
-            const list = document.getElementById("messages-list");
-            const messages = await fetchFileContent(GITHUB_CONFIG.messagesFile);
-
-            list.innerHTML = "";
-
-            if (!messages || messages.length === 0) {
-                list.innerHTML = '<div class="msg-item" style="text-align: center; color: var(--text-secondary);">Soyez le premier à laisser un message !</div>';
-                return;
-            }
-
-            // Plus récents en haut
-            messages.slice().reverse().forEach(msg => {
-                if (msg && msg.name && msg.text) {
-                    appendMessageToDOM(msg.name, msg.text);
-                }
             });
         }
 
@@ -698,33 +629,40 @@
             msgInput.value = "";
 
             try {
-                // Local
-                let existing = [];
-                try {
-                    const local = localStorage.getItem("backup_" + GITHUB_CONFIG.messagesFile);
-                    existing = local ? JSON.parse(local) : [];
-                } catch (e) {}
-                existing.push({ name, text, date: new Date().toISOString() });
-                localStorage.setItem("backup_" + GITHUB_CONFIG.messagesFile, JSON.stringify(existing));
-
-                // GitHub
-                const { arr, sha } = await githubGetFile(GITHUB_CONFIG.messagesFile);
-                arr.push({ name, text, date: new Date().toISOString() });
-                await githubPutFile(GITHUB_CONFIG.messagesFile, arr, sha, `Message de ${name}`);
-                localStorage.setItem("backup_" + GITHUB_CONFIG.messagesFile, JSON.stringify(arr));
+                const messages = await loadData(STORAGE.messages);
+                messages.push({
+                    name: name,
+                    text: text,
+                    date: new Date().toISOString()
+                });
+                await saveData(STORAGE.messages, messages);
                 setSyncStatus("✅ Message synchronisé sur tous les appareils");
             } catch (err) {
-                console.error("Ajout message:", err);
-                setSyncStatus("⚠️ " + err.message, true);
+                console.error(err);
+                setSyncStatus("⚠️ Erreur d'envoi, message visible ici seulement", true);
             } finally {
                 btnSend.disabled = false;
                 btnSend.innerText = "Envoyer";
             }
         }
 
+        async function saveScore(pseudo, userScore) {
+            try {
+                const scores = await loadData(STORAGE.scores);
+                scores.push({
+                    pseudo: pseudo,
+                    score: userScore,
+                    date: new Date().toISOString()
+                });
+                await saveData(STORAGE.scores, scores);
+                setTimeout(fetchScores, 600);
+            } catch (err) {
+                console.error("Erreur score:", err);
+            }
+        }
+
         function appendMessageToDOM(name, text) {
             const list = document.getElementById("messages-list");
-            // Évite les doublons
             const items = list.querySelectorAll(".msg-item");
             for (const el of items) {
                 if (el.innerText.includes(name) && el.innerText.includes(text)) return;
@@ -757,12 +695,12 @@
         }
 
         function startConfetti() {
-            const canvas = document.getElementById('confetti-canvas');
-            const ctx = canvas.getContext('2d');
+            const canvas = document.getElementById("confetti-canvas");
+            const ctx = canvas.getContext("2d");
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             const particles = [];
-            const colors = ['#6366f1', '#a855f7', '#ec4899', '#3b82f6', '#10b981', '#f59e0b'];
+            const colors = ["#6366f1", "#a855f7", "#ec4899", "#3b82f6", "#10b981", "#f59e0b"];
             for (let i = 0; i < 150; i++) {
                 particles.push({
                     x: Math.random() * canvas.width,
@@ -789,14 +727,14 @@
 
         // ========== INIT ==========
         document.addEventListener("DOMContentLoaded", () => {
-            fetchMessagesFromGitHub();
+            fetchMessages();
             fetchScores();
 
-            // Rafraîchissement auto toutes les 20 secondes
+            // Rafraîchissement automatique toutes les 15 secondes
             setInterval(() => {
-                fetchMessagesFromGitHub();
+                fetchMessages();
                 fetchScores();
-            }, 20000);
+            }, 15000);
         });
     </script>
 </body>
