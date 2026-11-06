@@ -200,6 +200,7 @@
             cursor: pointer;
         }
 
+        /* Styles du Quiz */
         .quiz-options {
             display: flex;
             flex-direction: column;
@@ -221,6 +222,7 @@
             border-color: var(--accent-glow);
         }
 
+        /* Tableau des scores */
         .scoreboard-table {
             width: 100%;
             border-collapse: collapse;
@@ -272,13 +274,6 @@
             margin-bottom: 1rem;
         }
 
-        .day-indicator {
-            font-size: 0.85rem;
-            color: #a855f7;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-
         @media (max-width: 650px) {
             .countdown-grid { grid-template-columns: repeat(2, 1fr); }
             h1 { font-size: 2rem; }
@@ -323,26 +318,25 @@
 
         <!-- SECTION QUIZ -->
         <div class="section-card">
-            <h2>🏆 Grand Quiz de Départ (3 questions / jour)</h2>
-            <div class="reward-banner">🍺 Le gagnant du classement remporte une boisson !</div>
+            <h2>🏆 Grand Quiz de Départ</h2>
+            <div class="reward-banner">🍺 Le gagnant remporte une boisson offerte !</div>
             
             <div id="quiz-registration">
                 <p class="desc">Entrez votre pseudo pour participer au classement :</p>
                 <div class="input-group">
                     <input type="text" id="quiz-pseudo" placeholder="Votre Pseudo (ex: Nico)">
-                    <button class="btn" onclick="startQuiz()">Lancer le Quiz du jour</button>
+                    <button class="btn" onclick="startQuiz()">Lancer le Quiz</button>
                 </div>
             </div>
 
             <div id="quiz-box" style="display: none;">
-                <div class="day-indicator" id="quiz-progress-text">Question 1/3</div>
                 <h3 id="quiz-question-title" style="margin-bottom: 1rem;">Question</h3>
                 <div class="quiz-options" id="quiz-options"></div>
             </div>
 
             <div id="quiz-result" style="display: none; text-align: center;">
                 <h3 id="quiz-final-score"></h3>
-                <p class="desc" style="margin-top: 0.5rem;">Votre score global a été mis à jour dans le classement ! Revenez demain pour 3 nouvelles questions.</p>
+                <p class="desc" style="margin-top: 0.5rem;">Votre score a été enregistré au classement !</p>
             </div>
 
             <h3 style="margin-top: 2rem; font-size: 1.1rem;">🥇 Tableau des Scores</h3>
@@ -351,7 +345,7 @@
                     <tr>
                         <th>Rang</th>
                         <th>Pseudo</th>
-                        <th>Score Total</th>
+                        <th>Score</th>
                     </tr>
                 </thead>
                 <tbody id="scoreboard-body">
@@ -377,7 +371,9 @@
     </div>
 
     <script>
+        // ----------------------------------------------------------------
         // CONFIGURATION GITHUB API
+        // ----------------------------------------------------------------
         const GITHUB_CONFIG = {
             owner: "jimmyruti",
             repo: "depart-jimmy",
@@ -385,11 +381,10 @@
             messagesFile: "messages.json",
             scoresFile: "scores.json"
         };
+        // ----------------------------------------------------------------
 
-        // CORRECTION DU COMPTE À REBOURS
-        // ISO string avec le fuseau horaire explicite (+01:00 pour la France)
-        const targetDate = new Date("2026-11-10T16:00:00+01:00").getTime();
-
+        // COMPTE À REBOURS
+        const targetDate = new Date("November 10, 2026 16:00:00").getTime();
         function updateCountdown() {
             const now = new Date().getTime();
             const difference = targetDate - now;
@@ -409,68 +404,24 @@
             const m = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
             const s = Math.floor((difference % (1000 * 60)) / 1000);
 
-            document.getElementById("days").innerText = String(d).padStart(2, '0');
-            document.getElementById("hours").innerText = String(h).padStart(2, '0');
-            document.getElementById("minutes").innerText = String(m).padStart(2, '0');
-            document.getElementById("seconds").innerText = String(s).padStart(2, '0');
+            document.getElementById("days").innerText = d < 10 ? "0" + d : d;
+            document.getElementById("hours").innerText = h < 10 ? "0" + h : h;
+            document.getElementById("minutes").innerText = m < 10 ? "0" + m : m;
+            document.getElementById("seconds").innerText = s < 10 ? "0" + s : s;
         }
-
-        // Lancement immédiat puis rafraîchissement toutes les secondes
-        updateCountdown();
         setInterval(updateCountdown, 1000);
+        updateCountdown();
 
-        // BANQUE DE QUESTIONS (3 questions / jour jusqu'au 10 Novembre)
-        const dailyQuestions = {
-            "2026-11-06": [
-                { question: "Quel est l'élément chimique représenté par le symbole 'O' ?", options: ["Or", "Oxygène", "Osmium", "Ozone"], answer: 1 },
-                { question: "Quelle planète est la plus proche du Soleil ?", options: ["Vénus", "Mars", "Mercure", "Jupiter"], answer: 2 },
-                { question: "Quel est le port par défaut du protocole HTTPS ?", options: ["80", "8080", "443", "21"], answer: 2 }
-            ],
-            "2026-11-07": [
-                { question: "En quelle année est sorti le premier iPhone ?", options: ["2005", "2007", "2009", "2010"], answer: 1 },
-                { question: "Quelle est la capitale du Japon ?", options: ["Kyoto", "Osaka", "Tokyo", "Hiroshima"], answer: 2 },
-                { question: "Combien d'octets y a-t-il dans un Kilooctet (Ko) ?", options: ["1000", "1024", "512", "2048"], answer: 1 }
-            ],
-            "2026-11-08": [
-                { question: "Quel inventeur est associé au courant alternatif ?", options: ["Edison", "Tesla", "Bell", "Marconi"], answer: 1 },
-                { question: "Quel est l'océan le plus grand de la Terre ?", options: ["Atlantique", "Indien", "Pacifique", "Arctique"], answer: 2 },
-                { question: "Que signifie l'acronyme 'CPU' en informatique ?", options: ["Central Processing Unit", "Computer Personal Unit", "Control Power Unit", "Core Program Utility"], answer: 0 }
-            ],
-            "2026-11-09": [
-                { question: "Quel monument parisien a été construit pour l'Exposition Universelle de 1889 ?", options: ["L'Arc de Triomphe", "La Tour Eiffel", "Le Louvre", "Le Sacré-Cœur"], answer: 1 },
-                { question: "Quel langage web est utilisé pour la mise en forme du style ?", options: ["HTML", "JavaScript", "CSS", "Python"], answer: 2 },
-                { question: "Combien de côtés possède un hexagone ?", options: ["5", "6", "7", "8"], answer: 1 }
-            ],
-            "2026-11-10": [
-                { question: "Quelle est la boisson rafraîchissante incontournable après un décompte réussi ?", options: ["Limonade", "Une bonne bière fraîche", "Un café", "De l'eau tiède"], answer: 1 },
-                { question: "Quel animal est le symbole du système d'exploitation Linux ?", options: ["Un gnou", "Un manchot (Tux)", "Un serpent", "Un dauphin"], answer: 1 },
-                { question: "Combien de secondes y a-t-il dans une minute ?", options: ["50", "60", "100", "90"], answer: 1 }
-            ]
-        };
+        // QUIZ DATA
+        const quizData = [
+            { question: "Quel est l'élément chimique représenté par le symbole 'O' ?", options: ["Or", "Oxygène", "Osmium", "Ozone"], answer: 1 },
+            { question: "Quelle est la capitale de la France ?", options: ["Lyon", "Marseille", "Paris", "Toulouse"], answer: 2 },
+            { question: "Combien de minutes y a-t-il dans une heure ?", options: ["50", "60", "100", "90"], answer: 1 }
+        ];
 
-        let currentActiveQuestions = [];
-        let currentQuestionIdx = 0;
-        let quizScore = 0;
+        let currentQuestion = 0;
+        let score = 0;
         let userPseudo = "";
-
-        function getTodayQuestions() {
-            const todayStr = new Date().toISOString().split('T')[0];
-            let questionsPool = [];
-
-            Object.keys(dailyQuestions).forEach(date => {
-                if (date <= todayStr) {
-                    questionsPool = questionsPool.concat(dailyQuestions[date]);
-                }
-            });
-
-            if (questionsPool.length === 0) {
-                Object.keys(dailyQuestions).forEach(date => {
-                    questionsPool = questionsPool.concat(dailyQuestions[date]);
-                });
-            }
-
-            return questionsPool;
-        }
 
         function startQuiz() {
             const pseudoInput = document.getElementById("quiz-pseudo");
@@ -479,19 +430,14 @@
                 return;
             }
             userPseudo = pseudoInput.value.trim();
-            currentActiveQuestions = getTodayQuestions();
-            currentQuestionIdx = 0;
-            quizScore = 0;
-
             document.getElementById("quiz-registration").style.display = "none";
             document.getElementById("quiz-box").style.display = "block";
             showQuestion();
         }
 
         function showQuestion() {
-            const q = currentActiveQuestions[currentQuestionIdx];
-            document.getElementById("quiz-progress-text").innerText = `Question ${currentQuestionIdx + 1} / ${currentActiveQuestions.length}`;
-            document.getElementById("quiz-question-title").innerText = q.question;
+            const q = quizData[currentQuestion];
+            document.getElementById("quiz-question-title").innerText = `Question ${currentQuestion + 1}/${quizData.length} : ${q.question}`;
             const optionsContainer = document.getElementById("quiz-options");
             optionsContainer.innerHTML = "";
 
@@ -505,11 +451,11 @@
         }
 
         function selectAnswer(index) {
-            if (index === currentActiveQuestions[currentQuestionIdx].answer) {
-                quizScore += 10;
+            if (index === quizData[currentQuestion].answer) {
+                score += 10;
             }
-            currentQuestionIdx++;
-            if (currentQuestionIdx < currentActiveQuestions.length) {
+            currentQuestion++;
+            if (currentQuestion < quizData.length) {
                 showQuestion();
             } else {
                 finishQuiz();
@@ -520,11 +466,11 @@
             document.getElementById("quiz-box").style.display = "none";
             const resultBox = document.getElementById("quiz-result");
             resultBox.style.display = "block";
-            document.getElementById("quiz-final-score").innerText = `Bravo ${userPseudo} ! Score du jour : ${quizScore} points 🎯`;
-            saveScoreToGitHub(userPseudo, quizScore);
+            document.getElementById("quiz-final-score").innerText = `Bravo ${userPseudo} ! Score final : ${score} points 🎯`;
+            saveScoreToGitHub(userPseudo, score);
         }
 
-        // GESTION SCORES GITHUB
+        // API GITHUB SCORES
         async function fetchScores() {
             const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.scoresFile}`;
             try {
@@ -539,26 +485,20 @@
                     const content = decodeURIComponent(escape(atob(data.content)));
                     const scores = JSON.parse(content || "[]");
                     
-                    const aggregated = {};
-                    scores.forEach(s => {
-                        if (!aggregated[s.pseudo] || aggregated[s.pseudo] < s.score) {
-                            aggregated[s.pseudo] = s.score;
-                        }
-                    });
+                    scores.sort((a, b) => b.score - a.score);
 
-                    const sorted = Object.keys(aggregated).map(k => ({ pseudo: k, score: aggregated[k] }));
-                    sorted.sort((a, b) => b.score - a.score);
-
-                    sorted.forEach((s, i) => {
+                    scores.forEach((s, i) => {
                         const tr = document.createElement("tr");
                         const badge = i === 0 ? "🥇 " : i === 1 ? "🥈 " : i === 2 ? "🥉 " : "";
                         tr.innerHTML = `<td>${badge}#${i+1}</td><td>${escapeHtml(s.pseudo)}</td><td><strong>${s.score} pts</strong></td>`;
                         tbody.appendChild(tr);
                     });
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Aucun score pour l\'instant. Soyez le premier !</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Aucun score pour l\'instant.Soyez le premier !</td></tr>';
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) {
+                console.error(err);
+            }
         }
 
         async function saveScoreToGitHub(pseudo, userScore) {
@@ -578,13 +518,13 @@
                 await fetch(url, {
                     method: 'PUT',
                     headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: `Score de ${pseudo}`, content: updatedContent, sha: sha })
+                    body: JSON.stringify({ message: `Nouveau score de ${pseudo}`, content: updatedContent, sha: sha })
                 });
                 fetchScores();
             } catch (err) { console.error(err); }
         }
 
-        // MESSAGES & INIT
+        // GITHUB MESSAGES & INITIALISATION
         document.addEventListener("DOMContentLoaded", () => {
             fetchMessagesFromGitHub();
             fetchScores();
